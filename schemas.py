@@ -12,6 +12,11 @@ class ProceedOption(str, Enum):
     FIX = "fix"
 
 
+class SolutionMethod(str, Enum):
+    HEURISTIC = "heuristic"
+    OPTIMIZATION = "optimization"
+
+
 # Schema for whole code project
 class Purpose(BaseModel):
     user_summary: str = Field(
@@ -21,7 +26,7 @@ class Purpose(BaseModel):
         description="The type of problem that is being solved, e.g., logistics optimization, resource allocation, etc."
     )
     optimization_focus: str = Field(
-        description="A description of how the solution should be optimized, focusing on improving how effectively the problem is solved. The emphasis is on achieving better alignment with the problem's core objectives, enhancing solution quality, and refining the approach to meet the user's goals without prioritizing performance metrics such as runtime."
+        description="A description of how the solution should be optimized, including key objectives such as minimizing costs or maximizing efficiency, and if applicable, specifying preferred heuristic methods like Nearest Neighbor for routing or Genetic Algorithms for cutting stock problems."
     )
     chatbot_response: str = Field(
         description="The chatbot's response to the user, explaining what is the problem, what will be done to solve the problem and why this approach is being taken."
@@ -31,6 +36,9 @@ class Purpose(BaseModel):
     )
     resource_requirements: str = Field(
         description="Specific requirements or allocations for the resource, such as how much is required for each task, order, or destination. This should include all the important details needed to solve the problem effectively."
+    )
+    solution_method: SolutionMethod = Field(
+        description="Determines whether the solution should use heuristic optimization or code generation."
     )
 
 
@@ -122,3 +130,4 @@ class AgentState(TypedDict):
     docker_output: str  # What running code in docker container outputs
     result: OutputOfCode  # Results of the code execution - answer, explanation, etc.
     results: List[OutputOfCode]
+    solution_method: SolutionMethod

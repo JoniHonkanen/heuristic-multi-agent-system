@@ -6,6 +6,7 @@ from .code_output_agent import code_output_analyzer_agent
 from .final_report_agent import final_report_agent
 from .new_loop_agent import new_loop_agent
 from .code_fixer_agent import code_fixer_agent
+from .heuristic_agent import heuristic_agent
 
 # Exporting all agents in a list for easy import and access
 all_agents = {
@@ -17,4 +18,5 @@ all_agents = {
     "final_report_agent": final_report_agent,
     "new_loop_agent": new_loop_agent,
     "code_fixer_agent": code_fixer_agent,
+    "heuristic_agent": heuristic_agent,
 }

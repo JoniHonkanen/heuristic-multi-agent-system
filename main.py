@@ -6,13 +6,14 @@ from langgraph.graph import StateGraph, END
 """ from agents.agents import (
     docker_environment_files_agent,
     code_generator_agent,
+    heuristic_agent,
     start_docker_container_agent,
     code_output_analyzer_agent,
     new_loop_agent,
     final_report_agent,
 ) """
 from agents import all_agents
-from schemas import AgentState
+from schemas import AgentState, ProceedOption, SolutionMethod
 
 # Ensure the 'generated' directory exists
 generated_dir = "generated"
@@ -27,6 +28,17 @@ async def on_chat_start():
     ).send()
 
 
+# Decision function for problem_analyzer
+def decide_problem_analysis(state: AgentState) -> str:
+    """
+    Determines whether to use the heuristic agent or code generator agent
+    based on the solution_method in the problem analysis result.
+    """
+    if state["solution_method"] == SolutionMethod.HEURISTIC:
+        return "heuristic"
+    return "code_generator"
+
+
 # Define a function to determine the next step based on 'proceed'
 def decide_next_step(state: AgentState):
     return state[
@@ -34,10 +46,24 @@ def decide_next_step(state: AgentState):
     ]  # This should return either 'continue', 'new', 'done', 'fix' or 'cancel'
 
 
+def determine_next_step(state: AgentState) -> str:
+    """
+    Determines the next step after problem_analyzer based on user decision
+    and the chosen solution method.
+    """
+    if state["proceed"] == ProceedOption.NEW:
+        return "problem_analyzer"  # Restart analysis
+    elif state["proceed"] == ProceedOption.CANCEL:
+        return END  # End the workflow
+    else:
+        return decide_problem_analysis(state)  # Use heuristic or code generation
+
+
 # Create the graph.
 workflow = StateGraph(AgentState)
 workflow.add_node("problem_analyzer", all_agents["problem_analyzer_agent"])
 workflow.add_node("code_generator", all_agents["code_generator_agent"])
+workflow.add_node("heuristic", all_agents["heuristic_agent"])
 workflow.add_node("docker_files", all_agents["docker_environment_files_agent"])
 workflow.add_node("start_docker", all_agents["start_docker_container_agent"])
 workflow.add_node("output_analyzer", all_agents["code_output_analyzer_agent"])
@@ -47,14 +73,16 @@ workflow.add_node("code_fixer", all_agents["code_fixer_agent"])
 # Use add_conditional_edges for cleaner transitions based on the proceed value
 workflow.add_conditional_edges(
     source="problem_analyzer",
-    path=decide_next_step,  # The function that determines the next step
+    path=determine_next_step,  # Use a function for clarity
     path_map={
-        "continue": "code_generator",  # Proceed to the next node (replace with actual node name)
-        "new": "problem_analyzer",  # Loop back to problem_analyzer for a new plan
-        "cancel": END,  # End the workflow
+        "heuristic": "heuristic",
+        "code_generator": "code_generator",
+        "problem_analyzer": "problem_analyzer",
+        END: END,
     },
 )
 workflow.add_edge("code_generator", "docker_files")
+workflow.add_edge("heuristic", "docker_files")
 workflow.add_edge("docker_files", "start_docker")
 # if error occurs during code execution in the Docker container, use code_fixer_agent
 workflow.add_conditional_edges(
@@ -88,7 +116,6 @@ async def main(message: cl.Message):
     # Initialize a dictionary to store file data
     file_data = {}
 
-    # Check if there are any elements in the message
     # Check if there are any elements in the message
     if message.elements:
         for element in message.elements:
@@ -125,6 +152,17 @@ async def main(message: cl.Message):
                     except Exception as e:
                         await cl.Message(
                             content=f"Virhe Python-tiedoston {file_name} käsittelyssä: {str(e)}"
+                        ).send()
+
+                elif file_name.endswith(".vrp"):
+                    try:
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            vrp_data = f.readlines()  # Read file line by line
+                        file_data[file_name] = vrp_data
+                        print(f"VRP-tiedosto {file_name} ladattu onnistuneesti.")
+                    except Exception as e:
+                        await cl.Message(
+                            content=f"Virhe VRP-tiedoston {file_name} käsittelyssä: {str(e)}"
                         ).send()
 
                 else:

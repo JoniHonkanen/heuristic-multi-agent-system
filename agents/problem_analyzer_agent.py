@@ -51,6 +51,7 @@ async def problem_analyzer_agent(state: AgentState):
         return state  # Returns the unmodified state on error
 
     state["purpose"] = response  # Stores parsed response in the state
+    state["solution_method"] = response.solution_method
 
     # Sends response to the user
     await cl.Message(content=f"{response.chatbot_response}").send()

@@ -1,4 +1,4 @@
-from .common import cl, PydanticOutputParser, llm
+from .common import cl, PydanticOutputParser, llm_code
 from schemas import AgentState, Code
 from prompts.prompts import NEW_LOOP_CODE_PROMPT, NEW_LOOP_CODE_PROMPT_NO_DATA
 
@@ -39,7 +39,7 @@ async def new_loop_logic(state: AgentState) -> Code:
     # Collect the full response from the LLM
     full_response = ""
     try:
-        async for chunk in llm.astream(prompt):
+        async for chunk in llm_code.astream(prompt):
             if hasattr(chunk, "content"):
                 full_response += chunk.content
     except Exception as e:
