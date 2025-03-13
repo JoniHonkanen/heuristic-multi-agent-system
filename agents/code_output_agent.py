@@ -63,27 +63,33 @@ async def code_output_analyzer_agent(state: AgentState):
     state["results"].append(response)
 
     # Display the analysis result to the user
-    await cl.Message(content=f"Analysis Result:\n{response.answer_description}").send()
+    await cl.Message(content=f"Analysis Result:\n{response.answer_description}\n{response.explanation}").send()
 
     # Ask the user if they want to start a new optimization round
     res = await cl.AskActionMessage(
         content="Let's begin a new optimization round?",
         actions=[
             cl.Action(
-                name="continue", value="continue", label="✅ Yes, let's continue"
+                name="continue",
+                payload={"value": "continue"},
+                label="✅ Yes, let's continue",
             ),
-            cl.Action(name="done", value="done", label="❌ This is enough for now"),
+            cl.Action(
+                name="done",
+                payload={"value": "done"},
+                label="❌ This is enough for now",
+            ),
         ],
     ).send()
 
     # Handle the user's response
-    if res and res.get("value") == "continue":
+    selected_value = res["payload"]["value"]
+
+    if selected_value == "continue":
         state["proceed"] = "continue"
         await cl.Message(content="Starting new optimization round!").send()
     else:
         state["proceed"] = "done"
-        await cl.Message(
-            content="Generating the final report! We are done for now."
-        ).send()
+        await cl.Message(content="Generating the final report! We are done for now.").send()
 
     return state

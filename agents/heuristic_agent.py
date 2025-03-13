@@ -1,6 +1,6 @@
 from prompts.prompts import HEURISTIC_PROMPT
 from schemas import AgentState, Code
-from .common import cl, llm_code
+from .common import cl, llm_code, llm_code_claude
 
 
 async def apply_heuristic_logic(state: AgentState) -> Code:
@@ -11,6 +11,7 @@ async def apply_heuristic_logic(state: AgentState) -> Code:
         user_summary=inputs.user_summary,
         problem_type=inputs.problem_type,
         optimization_focus=inputs.optimization_focus,
+        goal=inputs.goal,
         data=state["promptFiles"],
         resource_requirements=inputs.resource_requirements,
     )
@@ -46,6 +47,7 @@ async def heuristic_agent(state: AgentState) -> AgentState:
         f"Heuristic optimization applied. Suggested solution:\n```python\n{response.python_code}\n```",
         f"Requirements:\n```\n{response.requirements}\n```",
         f"Resources:\n```\n{response.resources}\n```",
+        f"Used heuristic:\n```\n{response.used_heuristic}\n```",
     )
 
     # Tallennetaan heuristinen ratkaisu samaan tapaan kuin generoidut koodit

@@ -31,43 +31,42 @@ TASK_ANALYSIS_PROMPT = ChatPromptTemplate.from_template(
     **Step 4: Problem Classification**
     - Determine the **problem type** (e.g., logistics optimization, scheduling, vehicle routing, resource allocation).
     - Define the **optimization focus**: What key aspects of the solution should be improved? (e.g., minimizing cost, reducing travel distance, maximizing efficiency).
-    - Consider whether the problem has a **strict mathematical formulation** or whether heuristic/metaheuristic methods are required.
+    - Consider whether the problem has a **strict mathematical formulation** or whether heuristic/metaheuristic methods are preferred due to complexity.
 
     **Step 5: Algorithm Selection & Justification**
+    - Prioritize **heuristic and metaheuristic methods** where applicable, as they are often more scalable and practical for large-scale problems.
     - Based on the problem type, determine whether the solution should be:
-      - **An exact optimization approach** (e.g., **PuLP for linear programming**).
-      - **A heuristic or metaheuristic approach** (e.g., **A* search, simulated annealing, genetic algorithms, tabu search**).
-    - **Justify why the chosen algorithm is appropriate** based on:
-      - **Problem complexity** (e.g., NP-hard, large-scale)
-      - **Computational efficiency needs** (e.g., real-time optimization)
-      - **Solution quality vs. execution speed trade-off**
-    - If the user has specified a **target value**, consider whether:
-      - The current approach is capable of achieving it.
-      - A different optimization technique should be used.
+      - **A heuristic or metaheuristic approach** (preferred) (e.g., **A* search, simulated annealing, genetic algorithms, tabu search**).
+      - **An exact optimization approach** (only if strictly necessary) (e.g., **PuLP for linear programming**).
+    - **Justify why a heuristic approach is preferred**, considering:
+      - **Problem complexity** (e.g., NP-hard, large-scale datasets)
+      - **Computational efficiency needs** (e.g., real-time decision-making)
+      - **Flexibility to handle real-world constraints** beyond strict mathematical formulations
+    - If the user has specified a **target value**, evaluate whether:
+      - A heuristic-based approach is sufficient to reach it.
+      - Additional fine-tuning is needed for better approximation.
 
-    **Step 6: Heuristic Evaluation & Further Refinements**
-    - If a heuristic/metaheuristic method is used, evaluate whether **it is sufficient or if additional optimization steps are required**.
-    - If using **nearest_neighbor** as an initial heuristic, specify how the solution should be **further optimized (e.g., `GUIDED_LOCAL_SEARCH`, genetic algorithm tuning)**.
-    - If the target value appears difficult to reach, suggest:
+    **Step 6: Heuristic Optimization & Refinements**
+    - If a heuristic/metaheuristic method is used, determine if **further improvements are necessary**.
+    - If a **simple heuristic** (e.g., nearest neighbor) is chosen, outline **additional refinements** (e.g., `GUIDED_LOCAL_SEARCH`, genetic algorithm enhancements).
+    - If achieving the target value is difficult, suggest:
       - Adjustments to constraints.
-      - A more advanced optimization technique.
+      - A more advanced metaheuristic approach for better performance.
 
     **Step 7: Solution Type Evaluation**
-    - Determine whether the generated solution should be:
-      - **Exact and optimal** (e.g., using integer programming or branch-and-bound methods).
-      - **Approximate and heuristic-based** (e.g., a metaheuristic search algorithm).
-    - Explain the **trade-offs** between computational time and solution quality.
-    - If the target value is given, determine whether the chosen method can achieve it efficiently.
+    - Strongly favor **heuristic and approximate methods** unless an exact solution is strictly required.
+    - Explain the **trade-offs** between execution speed and solution quality.
+    - If the user requires an exact solution, clarify whether it is computationally feasible.
 
     **Final Summary**
     - **What is the user trying to achieve with this task?** (Summarize the user's real objective)
     - **What is the purpose of solving this task?**
-    - **Is there a defined target value, and is it achievable?**
-    - **How can the solution be optimized to achieve the best result, focusing on quality and problem-solving?**
+    - **Is there a defined target value, and is it achievable with heuristics?**
+    - **How can the solution be optimized to achieve the best result, prioritizing heuristics and practical efficiency?**
     - **Are there any missing inputs that should be collected before generating code?**
-    - **Which heuristics or metaheuristics could be beneficial, and why?**
+    - **Which heuristic or metaheuristic approaches are most suitable, and why?**
     - **Does the heuristic require further refinement or additional steps for better results?**
-    - **Is the solution expected to be exact or approximate, and why?**
+    - **Is an exact solution required, or is a heuristic approach the preferred method?**
     """
 )
 
@@ -96,6 +95,9 @@ CODE_PROMPT = ChatPromptTemplate.from_template(
 
     **Summary of the user's input:**
     {user_summary}
+    
+    The ultimate goal:
+    {goal}
 
     **Problem type identified in earlier analysis:**
     {problem_type}
@@ -156,7 +158,6 @@ CODE_PROMPT = ChatPromptTemplate.from_template(
 )
 
 
-
 CODE_PROMPT_NO_DATA = ChatPromptTemplate.from_template(
     """
     Your task is to generate Python code that solves the optimization problem described by the user, using either PuLP (for linear programming) or heuristic algorithms (e.g., genetic algorithms, simulated annealing) depending on the problem's complexity and requirements.
@@ -173,6 +174,9 @@ CODE_PROMPT_NO_DATA = ChatPromptTemplate.from_template(
 
     Summary of the user's input:
     {user_summary}
+    
+    The ultimate goal:
+    {goal}
 
     Problem type identified in earlier analysis:
     {problem_type}
@@ -230,12 +234,18 @@ HEURISTIC_PROMPT = ChatPromptTemplate.from_template(
     - Avoid unnecessary dependencies—only include packages that are actually used in the code.
     - Do not use exact package versions (==), use flexible versions (>=latest_stable_version).
     - The generated code must run correctly without requiring modifications.
+    - All numerical values (e.g., floats, ints) must always be converted to strings before printing or concatenation.
+    - Direct string concatenation with numbers (`"text" + number`) is strictly forbidden.
+    - Always use f-strings or explicit conversion (`str(value)`) when handling numbers in print statements.
 
     Summary of the user's input:
     {user_summary}
 
     Problem type identified in earlier analysis:
     {problem_type}
+    
+    The ultimate goal:
+    {goal}
 
     Optimization focus:
     {optimization_focus}
@@ -247,7 +257,8 @@ HEURISTIC_PROMPT = ChatPromptTemplate.from_template(
     {resource_requirements}
 
     Choosing the best heuristic approach:
-    - For routing problems (VRP, TSP, logistics optimization): Use Nearest Neighbor (NN) or Clarke-Wright Savings for quick solutions. For more refined results, apply Simulated Annealing (SA) or Tabu Search. For large-scale problems, use Genetic Algorithms (GA) or Ant Colony Optimization (ACO).
+    - Always use the best-known heuristic or algorithm available for the problems.
+    - For routing problems (VRP, TSP, logistics optimization): Use always best known heuristics, for example Nearest Neighbor (NN) or Clarke-Wright Savings for quick solutions. For more refined results, apply Simulated Annealing (SA) or Tabu Search. For large-scale problems, use Genetic Algorithms (GA) or Ant Colony Optimization (ACO).
     - For cutting stock problems: Use First-Fit Decreasing (FFD) or Best-Fit Decreasing (BFD). For better results, apply Simulated Annealing (SA) or Genetic Algorithms (GA).
     - For scheduling and bin-packing problems: Use Greedy algorithms (Earliest Deadline First, Shortest Processing Time First). For complex constraints, use Tabu Search or Particle Swarm Optimization (PSO).
     - For large-scale combinatorial problems: If a well-known heuristic exists, use it (e.g., GRASP, Variable Neighborhood Search). If the problem is complex, try evolutionary algorithms (Genetic Algorithm, Differential Evolution).
@@ -281,13 +292,20 @@ HEURISTIC_PROMPT = ChatPromptTemplate.from_template(
     - All functions must be properly defined before being called.
     - All required packages in requirements.txt must be installable.
     - No missing variables, functions, or logic errors.
+    - Ensure that all string literals ('text' or "text") are properly closed and do not break across lines unexpectedly.
+    - **Do NOT place `\n` inside a `.format()` placeholder or split it across lines .**
+    - If a newline is needed, **use f-strings or concatenate explicitly (`+ "\\n"`) instead**.
+    - Ensure that all `.format()` calls receive the correct number of arguments to prevent tuple index errors.
+    - Verify that all string formatting operations (e.g., `.format()`, f-strings) correctly reference valid variables.
     - The generated code must run at least one test case to confirm correctness.
-
-    Response format:
-    Return a JSON object with the following fields:
-    - python_code: The fully functional, error-free Python code implementing the heuristic.
-    - requirements: A list of required Python packages.
-    - resources: List of additional required files or datasets.
+    - **The code must print all essential information relevant to the problem statement.** This includes:
+      - The final solution or optimal configuration.
+      - Any intermediate results that are necessary for understanding how the solution was derived.
+      - Key performance metrics (e.g., total cost, distance traveled, execution time).
+      - **All numerical values (e.g., floats, ints) must be converted to strings before printing or concatenation.**
+      - **Every `print()` statement must ensure that numbers are converted to strings using `str(value)` or f-strings.**
+      - **Direct string concatenation with numbers (`"text" + number`) is strictly forbidden.**
+      - **Verify that all print statements handle numerical values correctly to prevent `TypeError`.**
 
     The generated Python code must be structured, fully functional, and optimized for efficiency and scalability.
     """
@@ -331,41 +349,53 @@ DOCKER_FILES_PROMPT = ChatPromptTemplate.from_template(
 
 CODE_OUTPUT_ANALYSIS_PROMPT = ChatPromptTemplate.from_template(
     """
-    Your task is to analyze the output generated by the Python code and parse the relevant information, such as numerical results or tables, to directly answer the user's question. This involves examining the output data, identifying any issues or discrepancies, and providing insights into the quality of the solution.
+Your task is to analyze the output generated by the Python code and extract the relevant information, such as numerical results or tables, to directly answer the user's question. This involves examining the output data, identifying any issues or discrepancies, and providing insights into the quality of the solution.
 
-    **Original Question:**
-    {user_summary}
-    
-    **Original Goal:**
-    {original_goal}
+**Original Question:**
+{user_summary}
 
-    **Output of the Code:**
-    {code_output}
+**Original Goal:**
+{original_goal}
+
+**Output of the Code:**
+{code_output}
 
 **Instructions:**
 
-- **Parse the Numerical Results or Tables:** 
-  - Extract the relevant numerical answers or tables from the code output (e.g., how materials should be cut, total waste, objective value, etc.).
-  - Present these results clearly and concisely.
-- **Check against the Planned Steps:**
-  - Verify that the final output reflects the steps outlined in "planned steps part".
-  - Ensure that the results match the plan and that each step in the process has been executed correctly.
-  - If any planned steps were skipped or not fully implemented, provide details.
-- **Answer the Original Question:** 
-  - Based on the parsed results, provide a clear and direct answer to the user's question.
-- **Evaluate the Output Data:** 
-  - Does the output data look correct and logically consistent?
-  - Are there any issues, errors, or discrepancies present?
-- **Assess the Solution:**
-  - Has the original question or problem been effectively solved?
-  - How well does the solution meet the requirements?
-- **Summarize the Results:** 
-  - Highlight key findings or outputs from the code (e.g., how the materials were allocated, total waste, etc.).
-  - Provide any relevant metrics or outcomes.
-- **Provide Insights and Recommendations:** 
-  - Offer any observations about the quality or efficiency of the solution.
+- **Extract Numerical Results and Tables:**
+  - Identify and extract all relevant numerical values and structured data from the output.
+  - Preserve the exact wording of extracted values and do not assume any missing details.
+  - **Units must only be included if explicitly mentioned in the output. If no unit is given, do not assume one.**
+  - **Do not invent or infer units such as meters, kilometers, or any other measurement if they are not explicitly present in the output.**
+  - Structure extracted numerical values clearly for further analysis.
 
-**Your response should be thorough, accurate, and suitable for use in further analysis or decision-making.**
+- **Verify Output Against the Planned Steps:**
+  - Check whether the generated output aligns with the expected steps outlined in "planned steps part".
+  - Identify any missing or skipped steps and document them.
+  - Ensure that each part of the planned process is reflected in the final output.
+
+- **Provide a Direct Answer to the Original Question:**
+  - Summarize the extracted results concisely.
+  - Ensure the response is directly relevant to the user's original question.
+
+- **Assess the Accuracy and Consistency of the Output:**
+  - Evaluate whether the extracted numerical results are logically consistent.
+  - Identify any potential errors, anomalies, or inconsistencies in the results.
+  - Flag any values that seem incorrect or misaligned with the problem constraints.
+
+- **Evaluate the Quality of the Solution:**
+  - Determine if the output effectively solves the original problem.
+  - Assess whether the solution meets the expected requirements and constraints.
+
+- **Summarize Key Findings:**
+  - Highlight the most critical outputs (e.g., total cost, optimization result, resource usage).
+  - Present extracted numerical values in a structured way that can be used for further decision-making.
+
+- **Offer Insights and Recommendations:**
+  - Provide observations about the effectiveness and efficiency of the solution.
+  - Suggest improvements or alternative approaches if applicable.
+
+**Your response must be structured, accurate, and avoid making assumptions about missing information.**
     """
 )
 
@@ -398,20 +428,40 @@ NEW_LOOP_CODE_PROMPT = ChatPromptTemplate.from_template(
     - **If heuristics were used, determine whether a more advanced search method (e.g., simulated annealing, tabu search) can further enhance results**.
     - If the solution is **not consistently better**, introduce an iterative improvement mechanism.
 
-    **Step 4: Output the Best Solution**
+    **Step 4: Ensure Full Docker Compatibility**
+    - **All dependencies must be installable in Python 3.9+**.
+    - **Check that all required packages exist in PyPI and are installable inside a Docker container**.
+    - **Use flexible dependency versions (`>=latest_stable_version`) instead of exact version pins (`==`)**.
+    - **Avoid deprecated functions and ensure all functions are defined before being called**.
+    - **Before finalizing the code, confirm that it runs successfully inside a Python 3.9+ Docker container**.
+    - **Ensure that `pip install -r requirements.txt` succeeds without errors**.
+
+    **Example `requirements.txt` (ensure dependencies are available and installable):**
+    pandas>=1.3
+    numpy>=1.21
+    networkx>=2.6
+    deap>=1.3
+    scipy>=1.7
+    ortools>=9.2
+
+    **Step 5: Output the Best Solution**
     Your response must include:
 
     - **python_code**: The fully optimized Python code that strictly improves the previous result.
-    - **requirements**: A list of all Python dependencies (e.g., pandas, PuLP) needed to run the generated code.
+    - **requirements**: A list of all Python dependencies needed to run the generated code, ensuring they are installable in Python 3.9+.
     - **performance_comparison**: A summary of how the new solution compares to the previous one.
     - **objective_value**: The final computed value of the objective function in both the previous and new versions.
     - **test_cases**: A brief description of test cases used to verify that the new solution is indeed better.
+    - **Docker validation**: Confirmation that all dependencies can be installed and that the generated code runs successfully in a Python 3.9+ Docker environment.
 
     **Original user input:**
     {user_summary}
 
     **Original problem type:**
     {problem_type}
+    
+    **The Original ultimate goal:**
+    {goal}
 
     **Optimization focus:**
     {optimization_focus}
@@ -435,8 +485,10 @@ NEW_LOOP_CODE_PROMPT = ChatPromptTemplate.from_template(
     - Ensure that the code outputs the **final computed objective value** clearly for easy comparison.
     - Automate testing: Generate test cases that verify the improvement.
     - Optimize runtime efficiency **without compromising solution quality**.
+    - **Ensure that the code runs correctly in a Python 3.9+ Docker container**.
     """
 )
+
 
 
 NEW_LOOP_CODE_PROMPT_NO_DATA = ChatPromptTemplate.from_template(
@@ -586,25 +638,44 @@ CODE_FIXER_PROMPT = ChatPromptTemplate.from_template(
     You are an experienced software engineer specializing in debugging and fixing Python code. Your task is to analyze and resolve errors in the provided code, which failed to execute in a Docker container.
 
     **Step 1: Error Analysis**
-    - Carefully examine the error message from the Docker logs and determine the **exact cause of failure**.
+    - Examine the Docker logs to determine the exact cause of failure.
     - Categorize the error into one of the following types:
       - **SyntaxError / IndentationError** → Formatting or syntax issue.
-      - **ImportError / ModuleNotFoundError** → Missing or incompatible package.
-      - **TypeError / ValueError** → Incorrect data types or function usage.
+      - **ImportError / ModuleNotFoundError** → Missing, deprecated, or OS-incompatible package.
+      - **TypeError / ValueError** → Incorrect data types or function misuse.
       - **RuntimeError** → Execution-related failure (e.g., missing variable, infinite loop).
-      - **EnvironmentError** → Issue related to Docker, file paths, or missing system dependencies.
-    - Clearly explain why the error occurred before making any modifications.
+      - **EnvironmentError** → Docker-related issue, such as incorrect file paths or missing system dependencies.
+    - If the error is related to package dependencies, verify that the requirements.txt file is formatted correctly.
+      - **Important:** Each dependency should be listed on a separate line.
+      - If the file contains dependencies separated by commas or incorrect line breaks, they must be corrected
+    - Provide a clear explanation of why the error occurred before making any modifications.
+    
+    **Handling Syntax Errors (`SyntaxError: EOL while scanning string literal` & similar issues)**
+    - Ensure that all **string literals ('text' or "text") are correctly closed**.
+    - Look for **concatenated strings that span multiple lines without explicit line breaks**.
+    - Ensure that `.format()` calls do not contain misplaced newlines.
 
     **Step 2: Code Fixing**
-    - Make only **the minimal necessary modifications** to resolve the issue while maintaining the original logic.
-    - If the error is related to **package compatibility**, suggest version adjustments in `requirements.txt`.
-    - If an import is missing, determine whether it should be installed or if an alternative solution exists.
-    - If the error is due to a **Docker-related constraint**, suggest a fix that works within the container environment.
-    - Do **not modify external data files or access paths** unless strictly necessary.
+    - Apply only the necessary modifications to resolve the issue while preserving the original logic.
+    - If the issue is related to package compatibility:
+      - Verify whether the package exists and is supported in Python 3.9+.
+      - Ensure that **package versions do not introduce incompatibilities** that could cause failures.
+      - If a package is deprecated or unavailable, suggest a suitable replacement.
+      - Avoid using **hard version locks (`==`), unless necessary** to prevent conflicts.
+      - Check that all dependencies in `requirements.txt` **work together without breaking the runtime environment**.
+    - If an import is missing:
+      - Determine whether it should be installed or replaced with an alternative.
+      - Remove unnecessary imports if they are not used.
+    - If the error is Docker-related:
+      - Fix incorrect file paths by using relative paths.
+      - Ensure that required system dependencies are installed within the container.
+      - Handle missing environment variables properly.
+    - Do not modify external data files or paths unless required.
 
     **Step 3: Validation**
-    - Before returning the corrected code, ensure that it **executes successfully** in a simulated environment.
-    - If the correction introduces new errors, attempt an alternative fix and update the response accordingly.
+    - Verify that the corrected code executes without errors in a simulated environment.
+    - Ensure that the fix does not introduce new issues.
+    - If the first fix attempt fails, apply an alternative solution and update the response.
 
     **Docker Container Logs (Error Details)**:
     {docker_output}
@@ -620,9 +691,10 @@ CODE_FIXER_PROMPT = ChatPromptTemplate.from_template(
 
     **Response Format**
     Return a JSON object with the following fields:
-    - **error_analysis**: Explanation of why the error occurred.
-    - **corrected_code**: The fixed version of the Python code.
-    - **requirement_changes** (if applicable): Any adjustments made to package versions.
-    - **execution_status**: Confirmation that the corrected code runs successfully.
+    - **fixed_python_code**: The corrected Python code after fixing the issue.
+    - **requirements**: List of required dependencies needed to run the fixed code.
+    - ****requirements_changed**: Boolean indicating if the requirements were modified. This should be set to **true** even if the change was only a formatting fix (e.g., splitting dependencies onto separate lines or correcting commas).
+    - **fix_description**: Explanation of what was fixed and why.
+    - **original_error**: Summary of the error from Docker logs.
     """
 )

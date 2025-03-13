@@ -51,7 +51,7 @@ async def problem_analyzer_agent(state: AgentState):
         return state  # Returns the unmodified state on error
 
     state["purpose"] = response  # Stores parsed response in the state
-    state["solution_method"] = response.solution_method
+    state["solution_method"] = response.solution_method    
 
     # Sends response to the user
     await cl.Message(content=f"{response.chatbot_response}").send()
@@ -60,16 +60,17 @@ async def problem_analyzer_agent(state: AgentState):
     res = await cl.AskActionMessage(
         content="Sounds good, proceed?!",
         actions=[
-            cl.Action(name="continue", value="continue", label="✅ Continue"),
-            cl.Action(name="new", value="new", label="❌ Create new plan"),
-            cl.Action(name="cancel", value="cancel", label="❌ Cancel and start over"),
+            cl.Action(name="continue", payload={"value": "continue"}, label="✅ Continue"),
+            cl.Action(name="new", payload={"value": "new"},  label="❌ Create new plan"),
+            cl.Action(name="cancel", payload={"value": "cancel"},  label="❌ Cancel and start over"),
         ],
     ).send()
 
-    # Updates state based on user response
-    if res and res.get("value") == "continue":
+    selected_value = res["payload"]["value"]
+
+    if selected_value == "continue":
         state["proceed"] = "continue"
-    elif res and res.get("value") == "cancel":
+    elif selected_value == "cancel":
         state["proceed"] = "cancel"
         await cl.Message(content="Alright, let's cancel this and start over!").send()
     else:

@@ -1,6 +1,6 @@
 from prompts.prompts import CODE_PROMPT_NO_DATA, CODE_PROMPT
 from schemas import AgentState, Code
-from .common import cl, llm_code
+from .common import cl, llm_code, llm_code_claude
 
 #Splitted for two parts for easier testing
 async def generate_code_logic(state: AgentState) -> Code:
@@ -14,6 +14,7 @@ async def generate_code_logic(state: AgentState) -> Code:
     if state["promptFiles"] == "":
         prompt = CODE_PROMPT_NO_DATA.format(
             user_summary=inputs.user_summary,
+            goal=inputs.goal,
             problem_type=inputs.problem_type,
             optimization_focus=inputs.optimization_focus,
             resource_requirements=inputs.resource_requirements,
@@ -21,6 +22,7 @@ async def generate_code_logic(state: AgentState) -> Code:
     else:
         prompt = CODE_PROMPT.format(
             user_summary=inputs.user_summary,
+            goal=inputs.goal,
             problem_type=inputs.problem_type,
             optimization_focus=inputs.optimization_focus,
             data=state["promptFiles"],

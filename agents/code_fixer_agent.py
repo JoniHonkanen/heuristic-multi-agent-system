@@ -1,4 +1,4 @@
-from .common import cl, PydanticOutputParser, llm_code
+from .common import cl, PydanticOutputParser, llm_code, llm_code_claude
 from schemas import AgentState, Code, CodeFix
 from prompts.prompts import CODE_FIXER_PROMPT
 
@@ -57,13 +57,10 @@ async def code_fixer_agent(state: AgentState):
     current_step.input = (
         "Fixing the code based on the error encountered during execution."
     )
-    print("\n*******\n")
-    print("the code is:", code)
-    print("\n\nthe docker output is:", docker_output)
-    print("\n*******\n")
 
     try:
         # Call the core logic function
+        print("CALLING the fix_code_logic")
         response = await fix_code_logic(code, docker_output)
     except Exception as e:
         await cl.Message(content=str(e)).send()
@@ -77,8 +74,6 @@ async def code_fixer_agent(state: AgentState):
     )
 
     state["code"] = updated_code
-
-    print("the response is:", response)
 
     # Save the generated code to a Python file
     def clean_text(text):

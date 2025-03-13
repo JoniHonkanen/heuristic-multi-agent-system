@@ -32,7 +32,7 @@ class Purpose(BaseModel):
         description="The chatbot's response to the user, explaining what is the problem, what will be done to solve the problem and why this approach is being taken."
     )
     goal: str = Field(
-        description="The core objective of the task, summarizing the user's real goal and the purpose of solving the task."
+        description="The core objective of the task, summarizing the user's real goal and the purpose of solving the task. The goal should clearly define what needs to be achieved and include relevant key performance indicators (KPIs) or success criteria. These may include metrics such as cost minimization, efficiency improvement, resource utilization... "
     )
     resource_requirements: str = Field(
         description="Specific requirements or allocations for the resource, such as how much is required for each task, order, or destination. This should include all the important details needed to solve the problem effectively."
@@ -53,6 +53,10 @@ class Code(BaseModel):
     resources: Optional[str] = Field(
         default="No additional resources provided",  # Default value in case it's missing
         description="If no resources added, use default answer. Any additional requirements or files, such as data sheets (Excel files) or other resources, that are not included in the main requirements list but are necessary for the program.",
+    )
+    used_heuristic: Optional[str] = Field(
+        default=None,
+        description="The heuristic method used to generate the code, if applicable. The agent should recognize and add a known optimization method if relevant."
     )
 
 
@@ -87,27 +91,27 @@ class DockerFiles(BaseModel):
 
 class OutputOfCode(BaseModel):
     answer: str = Field(
-        description="The numerical answer, detailing the quantities or results of the calculation (e.g., how much material to cut)."
+        description="The extracted numerical result or key output from the calculation (e.g., total distance, optimized cost, material usage). If a unit is provided in the output, it should be included in the relevant field, but no assumptions should be made about units if they are not explicitly stated."
     )
     answer_description: str = Field(
-        description="A very detailed explanation or context for the numerical answer, providing additional insights or interpretations of the result."
+        description="A detailed explanation of the numerical result, providing insights into its meaning, relevance, and any constraints or conditions affecting the outcome."
     )
     improvement: str = Field(
-        description="Suggestions for enhancing the solution or optimization process."
+        description="Potential optimizations, refinements, or alternative approaches that could improve the solution, reduce resource usage, or enhance efficiency."
     )
     objective_value: Optional[float] = Field(
-        description="The objective value achieved by the optimization algorithm (e.g., the minimized waste or cost).",
+        description="The final objective value computed by the optimization algorithm (e.g., minimized cost, total distance, or another key performance metric). Units should only be included if explicitly mentioned in the output.",
         default=None,
     )
     explanation: str = Field(
-        description="A detailed step-by-step explanation of how the algorithm arrived at the final result, describing key decisions and constraints."
+        description="A step-by-step breakdown of how the algorithm reached the final result, including key decisions, constraints, and assumptions made during the process."
     )
     is_goal_achieved: str = Field(
-        description="Start with boolean value, but then explain why the goal is achieved or not.",
+        description="Boolean value indicating whether the goal was achieved, followed by a detailed explanation of why the goal was met or not, referencing the extracted results."
     )
     code: Optional[str] = Field(
-        default=None,  # Empty value by default
-        description="Earlier generated python code, this will be added later.",
+        default=None,
+        description="The generated Python code used to produce the result. This will be added later and should remain unchanged until explicitly modified."
     )
 
 

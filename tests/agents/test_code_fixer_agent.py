@@ -47,12 +47,6 @@ async def test_fix_code_logic(mock_state):
             error_message not in response.fixed_python_code
         ), "Expected error to be corrected in output code"
 
-        # Print the fixed code for review
-        print("\n\n**Fixed code:")
-        print(response.fixed_python_code)
-
-        print("\nWhat fixed and why: ", response.fix_description)
-
         print_colored_diff(
             error_code,
             response.fixed_python_code,

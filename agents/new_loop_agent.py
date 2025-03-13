@@ -1,6 +1,10 @@
-from .common import cl, PydanticOutputParser, llm_code
-from schemas import AgentState, Code
-from prompts.prompts import NEW_LOOP_CODE_PROMPT, NEW_LOOP_CODE_PROMPT_NO_DATA
+from .common import cl, PydanticOutputParser, llm_code, llm_code_claude
+from schemas import AgentState, Code, SolutionMethod
+from prompts.prompts import (
+    NEW_LOOP_CODE_PROMPT,
+    NEW_LOOP_CODE_PROMPT_NO_DATA,
+    NEW_LOOP_HEURISTIC_PROMPT,
+)
 
 
 async def new_loop_logic(state: AgentState) -> Code:
@@ -8,19 +12,11 @@ async def new_loop_logic(state: AgentState) -> Code:
     last_code = state["code"]
     last_output = state["result"]
 
-    # Select the appropriate prompt based on the presence of `promptFiles`
-    if state["promptFiles"] == "":
-        prompt = NEW_LOOP_CODE_PROMPT_NO_DATA.format(
+    # Select the appropriate prompt based on the solution method
+    if state["solution_method"] == SolutionMethod.HEURISTIC:
+        prompt = NEW_LOOP_HEURISTIC_PROMPT.format(
             user_summary=inputs.user_summary,
-            problem_type=inputs.problem_type,
-            optimization_focus=inputs.optimization_focus,
-            previous_results=last_output.answer_description,
-            previous_code=last_code.python_code,
-            resource_requirements=inputs.resource_requirements,
-        )
-    else:
-        prompt = NEW_LOOP_CODE_PROMPT.format(
-            user_summary=inputs.user_summary,
+            goal=inputs.goal,
             problem_type=inputs.problem_type,
             optimization_focus=inputs.optimization_focus,
             data=state["promptFiles"],
@@ -28,8 +24,29 @@ async def new_loop_logic(state: AgentState) -> Code:
             previous_code=last_code.python_code,
             resource_requirements=inputs.resource_requirements,
         )
+    else:
+        if state["promptFiles"] == "":
+            prompt = NEW_LOOP_CODE_PROMPT_NO_DATA.format(
+                user_summary=inputs.user_summary,
+                goal=inputs.goal,
+                problem_type=inputs.problem_type,
+                optimization_focus=inputs.optimization_focus,
+                previous_results=last_output.answer_description,
+                previous_code=last_code.python_code,
+                resource_requirements=inputs.resource_requirements,
+            )
+        else:
+            prompt = NEW_LOOP_CODE_PROMPT.format(
+                user_summary=inputs.user_summary,
+                goal=inputs.goal,
+                problem_type=inputs.problem_type,
+                optimization_focus=inputs.optimization_focus,
+                data=state["promptFiles"],
+                previous_results=last_output.answer_description,
+                previous_code=last_code.python_code,
+                resource_requirements=inputs.resource_requirements,
+            )
 
-    # Set up the output parser
     output_parser = PydanticOutputParser(pydantic_object=Code)
     format_instructions = output_parser.get_format_instructions()
 
