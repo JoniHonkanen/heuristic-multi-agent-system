@@ -14,6 +14,7 @@ async def apply_heuristic_logic(state: AgentState) -> Code:
         goal=inputs.goal,
         data=state["promptFiles"],
         resource_requirements=inputs.resource_requirements,
+        response_format=inputs.response_format,
     )
 
     # Interact with the LLM
@@ -32,6 +33,7 @@ async def heuristic_agent(state: AgentState) -> AgentState:
     current_step.input = (
         f"Applying heuristic optimization based on the following inputs:\n\n"
         f"User Summary: {inputs.user_summary}\n"
+        f"Response format: {inputs.response_format}\n"
         f"Problem Type: {inputs.problem_type}\n"
         f"Optimization Focus: {inputs.optimization_focus}\n"
     )
@@ -50,7 +52,11 @@ async def heuristic_agent(state: AgentState) -> AgentState:
         f"Used heuristic:\n```\n{response.used_heuristic}\n```",
     )
 
-    # Tallennetaan heuristinen ratkaisu samaan tapaan kuin generoidut koodit
+    # Lisää heuristiikka kommenttina koodin alkuun, jos se on annettu
+    if response.used_heuristic:
+        response.python_code = f"# Heuristic used: {response.used_heuristic}\n{response.python_code}"
+
+    # Päivitä tila ja tallenna tiedostot
     state["code"] = response
 
     with open("generated/generated.py", "w", encoding="utf-8") as f:

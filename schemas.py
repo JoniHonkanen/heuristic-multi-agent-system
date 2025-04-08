@@ -23,10 +23,11 @@ class Purpose(BaseModel):
         description="A summarized statement of what the user wants to achieve."
     )
     problem_type: str = Field(
-        description="The type of problem that is being solved, e.g., logistics optimization, resource allocation, etc."
+        description="The specific class of optimization problem, expressed in a way that reflects complexity and constraints. For example: 'constraint-based shift scheduling', 'multi-objective routing', or 'NP-hard resource allocation'. Avoid overly generic labels like 'scheduling' or 'planning'."
+
     )
     optimization_focus: str = Field(
-        description="A description of how the solution should be optimized, including key objectives such as minimizing costs or maximizing efficiency, and if applicable, specifying preferred heuristic methods like Nearest Neighbor for routing or Genetic Algorithms for cutting stock problems."
+        description="Describe the primary optimization objectives and constraints, including hard vs. soft constraints, fairness criteria, rotation rules, and resource ratios. Emphasize what must be satisfied versus what is desirable."
     )
     chatbot_response: str = Field(
         description="The chatbot's response to the user, explaining what is the problem, what will be done to solve the problem and why this approach is being taken."
@@ -35,10 +36,13 @@ class Purpose(BaseModel):
         description="The core objective of the task, summarizing the user's real goal and the purpose of solving the task. The goal should clearly define what needs to be achieved and include relevant key performance indicators (KPIs) or success criteria. These may include metrics such as cost minimization, efficiency improvement, resource utilization... "
     )
     resource_requirements: str = Field(
-        description="Specific requirements or allocations for the resource, such as how much is required for each task, order, or destination. This should include all the important details needed to solve the problem effectively."
+        description="Specific requirements or allocations for the resource, such as how much is required for each task, order, or destination. Explicitly include all relevant variables, values, constraints, or parameters provided by the user or data."
     )
     solution_method: SolutionMethod = Field(
         description="Determines whether the solution should use heuristic optimization or code generation."
+    )
+    response_format: str = Field(
+        description="The expected format of the output that the generated Python code must produce. Examples include: plain text string, JSON structure, Excel file with one value per cell, CSV with delimiter-separated values, or structured table.  This format must guide the structure of the actual output produced by the code, not just the explanation or documentation."
     )
 
 
@@ -56,7 +60,7 @@ class Code(BaseModel):
     )
     used_heuristic: Optional[str] = Field(
         default=None,
-        description="The heuristic method used to generate the code, if applicable. The agent should recognize and add a known optimization method if relevant."
+        description="The heuristic method used to generate the code, if applicable. The agent should recognize and add a known optimization method if relevant.",
     )
 
 
@@ -111,7 +115,7 @@ class OutputOfCode(BaseModel):
     )
     code: Optional[str] = Field(
         default=None,
-        description="The generated Python code used to produce the result. This will be added later and should remain unchanged until explicitly modified."
+        description="The generated Python code used to produce the result. This will be added later and should remain unchanged until explicitly modified.",
     )
 
 

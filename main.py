@@ -189,7 +189,11 @@ async def main(message: cl.Message):
         if isinstance(content, dict):
             # It's an Excel file with sheets
             for sheet_name, df in content.items():
-                # Convert DataFrame to JSON string
+                # Jos sarakkeilla ei ole nimiä, nimeä ne oletuksena
+                if df.columns.tolist() == list(range(len(df.columns))):
+                    df.columns = [f"Column_{i}" for i in range(len(df.columns))]
+
+                # Muunna DataFrame JSONiksi
                 json_string = df.to_json(orient="records", force_ascii=False, indent=2)
                 prompt_files.append(
                     f"File: {filename}, Sheet: {sheet_name}\nData:\n{json_string}"

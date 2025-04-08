@@ -4,6 +4,9 @@ TASK_ANALYSIS_PROMPT = ChatPromptTemplate.from_template(
     """
     Your task is to carefully analyze the user's input and any provided data to understand the problem they are trying to solve. The task could involve logistics process optimization (e.g., finding the shortest or fastest routes), the cutting stock problem, or other similar challenges.
 
+    **Important:**  
+    Carefully identify and fully understand all provided variables, constraints, values, and parameters that are relevant to successfully solving the user's task. Ensure these details are consistently and accurately applied in your analysis and the proposed solution.
+
     **Step 1: Understanding the User's Objective**
     - Identify the core purpose of the task and what the user ultimately wants to achieve.
     - Summarize the user's real objective in your own words, based on the task description and any available data (Python code, Excel files, or no data at all).
@@ -54,8 +57,7 @@ TASK_ANALYSIS_PROMPT = ChatPromptTemplate.from_template(
       - A more advanced metaheuristic approach for better performance.
 
     **Step 7: Solution Type Evaluation**
-    - Strongly favor **heuristic and approximate methods** unless an exact solution is strictly required.
-    - Explain the **trade-offs** between execution speed and solution quality.
+    - Favor **heuristic and approximate methods** unless an exact solution is strictly required.
     - If the user requires an exact solution, clarify whether it is computationally feasible.
 
     **Final Summary**
@@ -110,6 +112,9 @@ CODE_PROMPT = ChatPromptTemplate.from_template(
     
     **Resource Requirements:**
     {resource_requirements}
+    
+    **Format the output according to the user's specified response format:**
+    {response_format}
 
     **Response Format**
     The output should be structured as a JSON object with the following fields:
@@ -187,6 +192,9 @@ CODE_PROMPT_NO_DATA = ChatPromptTemplate.from_template(
     Resource Requirements:
     {resource_requirements}
     
+    Format the output according to the user's specified response format:
+    {response_format}
+    
     **Note:** The **Resource Requirements** section is very important for the generated code. It details the key resources available (e.g., materials, vehicles, personnel) and specific requirements (e.g., quantities, sizes) that must be fulfilled to solve the problem. The generated code must prioritize these resource requirements when forming the solution, ensuring that all available resources are utilized efficiently and constraints are respected.
 
     The code **must accurately represent the problem** based on the user's input, ensuring that all key factors (e.g., materials, quantities, constraints) relevant to the user's task are considered.
@@ -225,6 +233,9 @@ HEURISTIC_PROMPT = ChatPromptTemplate.from_template(
     """
     Your task is to generate fully functional, error-free Python code that implements an efficient heuristic-based solution to solve the optimization problem described by the user. The code must execute without issues on Python 3.9+.
 
+    **Important:**  
+    You must explicitly identify, fully understand, and correctly apply **all relevant variables, constraints, values, parameters, and conditions** provided by the user or contained within the given data. Ensure that none of the essential details are overlooked, and that all parameters and constraints directly inform your code implementation.
+
     Constraints:
     - Ensure the Python code is free of syntax errors, undefined variables, or missing imports.
     - Every function call must be defined properly before being used.
@@ -255,14 +266,26 @@ HEURISTIC_PROMPT = ChatPromptTemplate.from_template(
 
     Resource Requirements:
     {resource_requirements}
+    
+    Format the output according to the user's specified response format:
+    {response_format}
+    
+    Related for the format, ensure that the generated Python code produces output that exactly matches this format — including structure, layout, and data representation — without combining multiple values into a single field.
+    For example, if the output format is Excel, each value (e.g., name, time slot) must appear in its own cell. Do not place multiple values in a single cell using commas or other delimiters. Regardless of format, the output must be correctly structured, fully valid, and usable as-is in the target system (e.g., Excel, JSON parser, CSV reader) without requiring manual correction.
 
+    
     Choosing the best heuristic approach:
     - Always use the best-known heuristic or algorithm available for the problems.
     - For routing problems (VRP, TSP, logistics optimization): Use always best known heuristics, for example Nearest Neighbor (NN) or Clarke-Wright Savings for quick solutions. For more refined results, apply Simulated Annealing (SA) or Tabu Search. For large-scale problems, use Genetic Algorithms (GA) or Ant Colony Optimization (ACO).
     - For cutting stock problems: Use First-Fit Decreasing (FFD) or Best-Fit Decreasing (BFD). For better results, apply Simulated Annealing (SA) or Genetic Algorithms (GA).
-    - For scheduling and bin-packing problems: Use Greedy algorithms (Earliest Deadline First, Shortest Processing Time First). For complex constraints, use Tabu Search or Particle Swarm Optimization (PSO).
     - For large-scale combinatorial problems: If a well-known heuristic exists, use it (e.g., GRASP, Variable Neighborhood Search). If the problem is complex, try evolutionary algorithms (Genetic Algorithm, Differential Evolution).
     - For multi-objective optimization: Use NSGA-II (Non-Dominated Sorting Genetic Algorithm) to balance competing objectives.
+  - For complex scheduling and shift planning problems:
+    - Prefer metaheuristics as the primary approach due to the combinatorial complexity and constraint interactions:
+      - Use Iterated Local Search (ILS), Variable Neighborhood Search (VNS), or Tabu Search to efficiently explore the solution space and escape local optima.
+      - For highly variable or uncertain problems, apply Simulated Annealing (SA) or Genetic Algorithms (GA) to maintain diversity and robustness.
+      - If no single metaheuristic consistently performs well, use Hyperheuristics to dynamically select or generate heuristics based on performance feedback.
+    - If a faster but less flexible solution is acceptable, fall back to constructive heuristics (e.g., Greedy, Earliest Deadline First) as a baseline or initialization strategy.
 
     Handling VRP & Routing-Specific Files:
     - If the provided files include `.vrp` files (Vehicle Routing Problem data):
@@ -286,6 +309,14 @@ HEURISTIC_PROMPT = ChatPromptTemplate.from_template(
     deap>=1.3
     scipy>=1.7
     ortools>=9.2
+    openpyxl>=3.0
+    
+    **Handling File Inputs & Data Processing**
+    - If the provided files include **data sheets (Excel, CSV, etc.)**, ensure that:
+      - **The correct file handling libraries (`pandas`, `openpyxl`) are included** in the requirements.
+      - The code properly reads, processes, and integrates the data into the optimization model.
+      - **The data format is preserved** to avoid errors (e.g., numerical precision issues, encoding conflicts).
+    - **Avoid hardcoded paths**—ensure that input filenames are configurable.
 
     Ensuring correctness:
     - The Python code must be executable without modifications.
@@ -490,7 +521,6 @@ NEW_LOOP_CODE_PROMPT = ChatPromptTemplate.from_template(
 )
 
 
-
 NEW_LOOP_CODE_PROMPT_NO_DATA = ChatPromptTemplate.from_template(
     """
     Your task is to generate Python code that solves the optimization problem described by the user, using either PuLP (for linear programming) or heuristic algorithms (e.g., genetic algorithms, simulated annealing) depending on the problem's complexity and requirements.
@@ -688,6 +718,8 @@ CODE_FIXER_PROMPT = ChatPromptTemplate.from_template(
 
     **Original Resources (Do not modify unless required)**:
     {resources}
+    
+    You can comment and tell on the file used fixes, heuristics etc. so user know what have done.
 
     **Response Format**
     Return a JSON object with the following fields:

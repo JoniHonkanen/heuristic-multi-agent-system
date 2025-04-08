@@ -18,6 +18,7 @@ async def generate_code_logic(state: AgentState) -> Code:
             problem_type=inputs.problem_type,
             optimization_focus=inputs.optimization_focus,
             resource_requirements=inputs.resource_requirements,
+            response_format=inputs.response_format,
         )
     else:
         prompt = CODE_PROMPT.format(
@@ -27,6 +28,7 @@ async def generate_code_logic(state: AgentState) -> Code:
             optimization_focus=inputs.optimization_focus,
             data=state["promptFiles"],
             resource_requirements=inputs.resource_requirements,
+            response_format=inputs.response_format,
         )
 
     # Interact with the LLM
@@ -49,6 +51,7 @@ async def code_generator_agent(state: AgentState) -> AgentState:
     current_step.input = (
         f"Generating code based on the following inputs:\n\n"
         f"User Summary: {inputs.user_summary}\n"
+        f"Response format: {inputs.response_format}\n"
         f"Problem Type: {inputs.problem_type}\n"
         f"Optimization Focus: {inputs.optimization_focus}\n"
         f"Data: {state['promptFiles']}"

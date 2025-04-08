@@ -61,9 +61,10 @@ async def code_output_analyzer_agent(state: AgentState):
         state["results"] = []
 
     state["results"].append(response)
+    print(f"RESULTS: {state['results']}")
 
     # Display the analysis result to the user
-    await cl.Message(content=f"Analysis Result:\n{response.answer_description}\n{response.explanation}").send()
+    await cl.Message(content=f"Analysis Result:\n{response.answer_description}\n\n{response.explanation}").send()
 
     # Ask the user if they want to start a new optimization round
     res = await cl.AskActionMessage(
