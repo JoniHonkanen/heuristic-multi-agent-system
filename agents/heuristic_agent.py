@@ -1,10 +1,28 @@
 from prompts.prompts import HEURISTIC_PROMPT
-from schemas import AgentState, Code
+from schemas import AgentState, Code, ProblemClass
 from .common import cl, llm_code, llm_code_claude
+from prompts.instuctions import *
 
 
 async def apply_heuristic_logic(state: AgentState) -> Code:
     inputs = state["purpose"]
+    problem_type = inputs.problem_class
+
+    problem_guidance_map = {
+        ProblemClass.CUTTING_STOCK: CUTTING_STOCK,
+        ProblemClass.VRP: VRP,
+        ProblemClass.KNAPSACK: KNAPSACK,
+        ProblemClass.SHIFT_SCHEDULING: SHIFT_SCHEDULING,
+        ProblemClass.OTHER: OTHER,
+    }
+
+    def get_guidance(problem_type: ProblemClass) -> dict:
+        return problem_guidance_map.get(problem_type, OTHER)
+
+    guidance = get_guidance(problem_type)
+
+    print(f"Problem type: {problem_type}")
+    print(f"guidance: {guidance}")
 
     # Select the appropriate heuristic prompt
     prompt = HEURISTIC_PROMPT.format(
@@ -15,7 +33,11 @@ async def apply_heuristic_logic(state: AgentState) -> Code:
         data=state["promptFiles"],
         resource_requirements=inputs.resource_requirements,
         response_format=inputs.response_format,
+        problem_specific_guidelines=guidance["guidelines"],
+        problem_specific_example=guidance["example"],
     )
+
+    print(f"\nPrompt!!!!!!!:\n {prompt}")
 
     # Interact with the LLM
     structured_llm = llm_code.with_structured_output(Code)
@@ -54,7 +76,9 @@ async def heuristic_agent(state: AgentState) -> AgentState:
 
     # Lisää heuristiikka kommenttina koodin alkuun, jos se on annettu
     if response.used_heuristic:
-        response.python_code = f"# Heuristic used: {response.used_heuristic}\n{response.python_code}"
+        response.python_code = (
+            f"# Heuristic used: {response.used_heuristic}\n{response.python_code}"
+        )
 
     # Päivitä tila ja tallenna tiedostot
     state["code"] = response

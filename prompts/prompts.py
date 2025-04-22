@@ -7,7 +7,7 @@ You are a reasoning assistant. Your task is to carefully analyze the user's inpu
 ### General Instructions
 Carefully identify and fully understand all provided variables, constraints, values, and parameters that are relevant to successfully solving the user's task. Ensure these details are consistently and accurately applied in your analysis and the proposed solution.
 
-### Step 1: Understanding the User's Objective
+### Step 1: Objective
 - Identify the core purpose of the task and what the user ultimately wants to achieve.
 - Summarize the user's real objective in your own words, based on the task description and any available data (Python code, Excel files, or no data at all).
 - If no data is provided, identify what might be missing to solve the task.
@@ -35,6 +35,16 @@ I need to cut large steel sheets into specific widths to fulfill 8 customer orde
 <assistant_response id="example-2">
 This is a Cutting Stock Problem. The objective is to minimize material waste while meeting all customer demands. Heuristic techniques like First-Fit Decreasing or Guided Local Search are effective for this use case.
 </assistant_response>
+
+### Step 1b: Variables and Constraints
+- List and clearly define **all variables, constants, and parameters** involved in the task.
+- Identify:
+  - **Decision variables** (e.g., route assignments, cut patterns, delivery sequences)
+  - **Problem parameters** (e.g., vehicle capacities, customer demands, item sizes, time limits)
+  - **Fixed constants** (e.g., depot location, number of vehicles)
+  - **Objective function components** (e.g., total cost, total distance, waste, lateness)
+- Explicitly list all **hard constraints** (must be satisfied) and **soft constraints** (can be optimized).
+- Ensure all variables and constraints are **consistent with the problem definition**, and that no critical parameter is missing or misinterpreted.
 
 ### Step 2: Target Value Handling
 - Determine if the user has specified a target value for optimization (e.g., minimum distance, maximum efficiency, cost constraint).
@@ -78,6 +88,15 @@ This is a Cutting Stock Problem. The objective is to minimize material waste whi
 - Identify the expected response format (e.g., JSON, text, Excel, CSV)
 - Ensure that any generated code or explanation aligns with this output format
 - Clarify if the format refers to user-facing output or internal data representation
+
+### Step 9: Problem Class Identification
+Based on your full understanding of the task and data, classify the problem.
+
+Choose **one** of the following:
+{problem_class}
+
+Respond in this exact format:
+**problem_class**: <ONE_ENUM_VALUE>
 
 ### Final Summary
 - What is the user trying to achieve?
@@ -268,14 +287,14 @@ Summary of the user's input:
 Problem type identified in earlier analysis:  
 {problem_type}
 
+Provided data (Python code, Excel files, .vrp files, or may be empty):  
+{data}
+
 The ultimate goal:  
 {goal}
 
 Optimization focus:  
 {optimization_focus}
-
-Provided data (Python code, Excel files, .vrp files, or may be empty):  
-{data}
 
 Resource Requirements:  
 {resource_requirements}
@@ -284,11 +303,7 @@ Resource Requirements:
 - Choose the most appropriate heuristic or metaheuristic for the problem.
 - Base your selection on the problem type and scalability requirements.
 
-Guidelines:
-- VRP / TSP: Nearest Neighbor, Clarke-Wright, Simulated Annealing, Tabu Search, GA, ACO
-- Cutting stock: FFD, BFD, SA, GA
-- Scheduling: ILS, VNS, Tabu Search, Hyperheuristics
-- Multi-objective: NSGA-II
+{problem_specific_guidelines}
 
 ### Step 3: Prepare the Python Code Structure
 - Ensure that the code is modular and clearly structured.
@@ -330,36 +345,20 @@ scipy>=1.7
 ortools>=9.2
 openpyxl>=3.0
 
+### Step 8: Print Results for Validation
+- Your generated Python code must include output that prints the resulting solution in a human-readable format.
+- This applies **even if the result is also written to a file (e.g., Excel)**.
+- At minimum, print:
+  - The **total objective value** (e.g., total route distance, total cost, or fitness).
+  - A **summary of the solution** (e.g., routes per vehicle, selected actions, or other domain-specific output).
+- This output is required to facilitate quick visual inspection, debugging, and testing of the solution.
+- Avoid silent or implicit results — make the outcome observable directly via `print()` statements.
+
 Your response must begin with a **brief explanation** of the selected heuristic, followed by the complete **Python code**, and then a correctly formatted **requirements.txt**.
 
 ---
 
-### Example – Heuristic Code Generation (Generic)
-
-Input:
-<structured_state id="example-1">
-  <user_summary>Allocate resources to minimize total cost across tasks</user_summary>
-  <problem_type>Resource allocation</problem_type>
-  <optimization_focus>Cost minimization</optimization_focus>
-  <goal>Heuristic-based assignment</goal>
-  <data>task_input.csv</data>
-  <resource_requirements>Task costs and limits</resource_requirements>
-  <response_format>CSV</response_format>
-</structured_state>
-
-Output:
-<assistant_response id="example-1">
-# Heuristic used: Greedy allocation based on cost-benefit ratio
-```python
-import pandas as pd
-
-df = pd.read_csv("task_input.csv")
-df["ratio"] = df["benefit"] / df["cost"]
-df = df.sort_values(by="ratio", ascending=False)
-
-# Allocate resources...
-# ...
-</assistant_response> 
+{problem_specific_example}
 """ )
   
 
@@ -630,6 +629,13 @@ You are an AI assistant tasked with producing a strictly improved heuristic-base
 - If the result was acceptable, assess whether **further improvements** are still possible.
 - Pinpoint the **main limitations** of the previous approach that should be addressed.
 
+#### Redundancy Avoidance
+- You must not simply re-use or replicate the previously applied heuristic with minor or superficial changes (e.g., renaming functions or reordering statements).
+- If the previously used method (e.g., simulated annealing, genetic algorithm) has already been applied, you must either:
+  - Extend it with a **clear structural improvement** (e.g., capacity handling, better crossover/mutation, adaptive parameters),
+  - Or replace it with a **fundamentally different heuristic framework**.
+- Generating two iterations with essentially the **same algorithm and logic is considered invalid**.
+
 ### Step 2b: Heuristic Selection Strategy
 - Do **not** chain multiple metaheuristics blindly (e.g., NN → SA → Tabu → GA → ACO).
 - **Only apply one advanced heuristic or metaheuristic at a time**.
@@ -669,6 +675,7 @@ You are an AI assistant tasked with producing a strictly improved heuristic-base
 - If the previous method was too simple, try **metaheuristics** or multi-phase strategies.
 
 ### Step 4: Output the Best Heuristic Solution
+At the top of the code output, include a short comment identifying the heuristic used, e.g.: Heuristic used: Genetic Algorithm with capacity-aware route splitting
 Your response must include the following structured output:
 
 - **python_code**: The Python code implementing the improved heuristic.
@@ -699,10 +706,22 @@ scipy>=1.7
 ortools>=9.2
 openpyxl>=3.0
 
+### Step 7: Print Results for Validation
+- Your generated Python code must include output that prints the resulting solution in a human-readable format.
+- This applies **even if the result is also written to a file (e.g., Excel)**.
+- At minimum, print:
+  - The **total objective value** (e.g., total route distance, total cost, or fitness).
+  - A **summary of the solution** (e.g., routes per vehicle, selected actions, or other domain-specific output).
+- This output is required to facilitate quick visual inspection, debugging, and testing of the solution.
+- Avoid silent or implicit results — make the outcome observable directly via `print()` statements.
+
 ---
 
 **Original user input:**  
 {user_summary}
+
+**The Original ultimate goal:**
+{goal}
 
 **Original problem type:**  
 {problem_type}
@@ -721,6 +740,9 @@ openpyxl>=3.0
 
 **Resource Requirements:**  
 {resource_requirements}
+
+**Output must conform to this required format:**
+{response_format}
 
 ---
 

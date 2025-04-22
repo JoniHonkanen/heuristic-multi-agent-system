@@ -17,6 +17,7 @@ async def new_loop_logic(state: AgentState) -> Code:
 
     # Select the appropriate prompt based on the solution method
     if state["solution_method"] == SolutionMethod.HEURISTIC:
+        print("!!!!!Using heuristic prompt!!!!!!")
         prompt = NEW_LOOP_HEURISTIC_PROMPT.format(
             user_summary=inputs.user_summary,
             goal=inputs.goal,
@@ -26,6 +27,7 @@ async def new_loop_logic(state: AgentState) -> Code:
             previous_results=last_output.answer_description,
             previous_code=last_code.python_code,
             resource_requirements=inputs.resource_requirements,
+            response_format=inputs.response_format
         )
     else:
         if state["promptFiles"] == "":

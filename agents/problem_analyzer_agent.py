@@ -1,9 +1,9 @@
 # File: problem_analyzer_agent.py
-
+import re
 from prompts.prompts import (
     TASK_ANALYSIS_PROMPT,
 )
-from schemas import AgentState, Purpose
+from schemas import AgentState, Purpose, ProblemClass
 from .common import cl, PydanticOutputParser, llm
 
 
@@ -22,8 +22,9 @@ async def problem_analyzer_agent(state: AgentState):
         f"Prompt Files:\n{prompt_files}"
     )
 
+    problem_class = "\n".join(f"- {cls.name}" for cls in ProblemClass)
     # Formats the prompt for the LLM based on user input and prompt files
-    prompt = TASK_ANALYSIS_PROMPT.format(user_input=userInput, data=prompt_files)
+    prompt = TASK_ANALYSIS_PROMPT.format(user_input=userInput, data=prompt_files, problem_class=problem_class)
 
     # Initialize Pydantic parser to structure the LLM's output in the Purpose model
     output_parser = PydanticOutputParser(pydantic_object=Purpose)
@@ -33,6 +34,9 @@ async def problem_analyzer_agent(state: AgentState):
 
     # Append format instructions to the prompt
     prompt += f"\n\n{format_instructions}"
+    
+    print("\nPrompt for LLM:\n")
+    print(prompt)  # Debugging: prints the prompt to the console
 
     # Initialize empty response container for streaming LLM response
     full_response = ""

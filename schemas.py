@@ -15,6 +15,13 @@ class ProceedOption(str, Enum):
 class SolutionMethod(str, Enum):
     HEURISTIC = "heuristic"
     OPTIMIZATION = "optimization"
+    
+class ProblemClass(str, Enum):
+    CUTTING_STOCK = "cutting_stock"
+    VRP = "vehicle_routing"
+    KNAPSACK = "knapsack"
+    SHIFT_SCHEDULING = "shift_scheduling" #work hours
+    OTHER = "other"
 
 
 # Schema for whole code project
@@ -24,7 +31,6 @@ class Purpose(BaseModel):
     )
     problem_type: str = Field(
         description="The specific class of optimization problem, expressed in a way that reflects complexity and constraints. For example: 'constraint-based shift scheduling', 'multi-objective routing', or 'NP-hard resource allocation'. Avoid overly generic labels like 'scheduling' or 'planning'."
-
     )
     optimization_focus: str = Field(
         description="Describe the primary optimization objectives and constraints, including hard vs. soft constraints, fairness criteria, rotation rules, and resource ratios. Emphasize what must be satisfied versus what is desirable."
@@ -43,6 +49,9 @@ class Purpose(BaseModel):
     )
     response_format: str = Field(
         description="The expected format of the output that the generated Python code must produce. Examples include: plain text string, JSON structure, Excel file with one value per cell, CSV with delimiter-separated values, or structured table.  This format must guide the structure of the actual output produced by the code, not just the explanation or documentation."
+    )
+    problem_class: ProblemClass = Field(
+        description="Structured classification of the optimization problem type. One of: CUTTING_STOCK, VRP, KNAPSACK, SHIFT_SCHEDULING, OTHER. etc"
     )
 
 
