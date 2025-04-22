@@ -60,8 +60,8 @@ async def code_output_analyzer_agent(state: AgentState):
     if "results" not in state:
         state["results"] = []
 
+    #results on lista kaikista ratkaisuista mitä tehty, tämän joukosta valitaan se paras
     state["results"].append(response)
-    print(f"RESULTS: {state['results']}")
 
     # Display the analysis result to the user
     await cl.Message(content=f"Analysis Result:\n{response.answer_description}\n\n{response.explanation}").send()

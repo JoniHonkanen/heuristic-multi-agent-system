@@ -86,5 +86,7 @@ async def code_fixer_agent(state: AgentState):
     if response.requirements_changed:
         with open("generated/requirements.txt", "w", encoding="utf-8") as f:
             f.write(response.requirements)
+            
+    current_step.output = response.fixed_python_code
 
     return state

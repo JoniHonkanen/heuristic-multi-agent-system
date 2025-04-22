@@ -27,9 +27,7 @@ async def start_docker_container_agent(state: AgentState):
             encoding="utf-8",
         ) as build_process:
             for line in build_process.stdout:
-                print(line, end="")
                 full_output += line
-                await current_step.stream_token(line)
             build_process.wait()
             if build_process.returncode != 0:
                 raise Exception("Docker image build failed")
@@ -83,18 +81,22 @@ async def start_docker_container_agent(state: AgentState):
         if up_process.returncode is not None and up_process.returncode != 0:
             raise Exception("Docker container execution failed")
 
-        state["docker_output"] = full_output
+        last_100_lines = "\n".join(full_output.strip().splitlines()[-100:])
+        state["docker_output"] = last_100_lines
         state["proceed"] = "continue"
+        current_step.output = last_100_lines 
 
     except Exception as e:
         print(f"An error occurred: {e}")
         output_to_use = (
             error_output.strip() if error_output.strip() else full_output.strip()
         )
+        short_output = "\n".join(output_to_use.splitlines()[-100:])
         state["docker_output"] = f"{str(e)}\n{output_to_use}"
         state["proceed"] = "fix"
+        current_step.output = f"{str(e)}\n{short_output}" 
         await cl.Message(
-            content=f"An error occurred: {e}\nDetails:\n{output_to_use}"
+            content=f"An error occurred: {e}\nDetails:\n{short_output}"
         ).send()
 
     finally:

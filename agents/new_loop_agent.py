@@ -14,6 +14,7 @@ async def new_loop_logic(state: AgentState) -> Code:
 
     # Select the appropriate prompt based on the solution method
     if state["solution_method"] == SolutionMethod.HEURISTIC:
+        print("LÖYTYY DATAA!!!!")
         prompt = NEW_LOOP_HEURISTIC_PROMPT.format(
             user_summary=inputs.user_summary,
             goal=inputs.goal,
@@ -116,6 +117,12 @@ async def new_loop_agent(state: AgentState) -> AgentState:
 
     with open("generated/requirements.txt", "w", encoding="utf-8") as f:
         f.write(response.requirements)
+
+    current_step.output = (
+        f"New code and requirements generated.\n\n"
+        f"Code:\n```python\n{response.python_code}\n```\n\n"
+        f"Requirements:\n```\n{response.requirements}\n```"
+    )
 
     state["code"] = response
     return state

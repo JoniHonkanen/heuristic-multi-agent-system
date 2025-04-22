@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import chainlit as cl
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph, END
 
 """ from agents.agents import (
@@ -212,6 +213,7 @@ async def main(message: cl.Message):
         iterations=0,
         promptFiles=formatted_data,
     )
+    config = RunnableConfig(recursion_limit=50)
 
     # Invoke the agent with the state
-    await app.ainvoke(state)
+    await app.ainvoke(state,config)
