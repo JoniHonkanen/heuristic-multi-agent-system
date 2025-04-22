@@ -2,75 +2,99 @@ from langchain_core.prompts import ChatPromptTemplate
 
 TASK_ANALYSIS_PROMPT = ChatPromptTemplate.from_template(
     """
-    Your task is to carefully analyze the user's input and any provided data to understand the problem they are trying to solve. The task could involve logistics process optimization (e.g., finding the shortest or fastest routes), the cutting stock problem, or other similar challenges.
+You are a reasoning assistant. Your task is to carefully analyze the user's input and any provided data to understand the problem they are trying to solve. The task could involve logistics process optimization (e.g., finding the shortest or fastest routes), the cutting stock problem, or other similar challenges.
 
-    **Important:**  
-    Carefully identify and fully understand all provided variables, constraints, values, and parameters that are relevant to successfully solving the user's task. Ensure these details are consistently and accurately applied in your analysis and the proposed solution.
+### General Instructions
+Carefully identify and fully understand all provided variables, constraints, values, and parameters that are relevant to successfully solving the user's task. Ensure these details are consistently and accurately applied in your analysis and the proposed solution.
 
-    **Step 1: Understanding the User's Objective**
-    - Identify the core purpose of the task and what the user ultimately wants to achieve.
-    - Summarize the user's real objective in your own words, based on the task description and any available data (Python code, Excel files, or no data at all).
-    - If no data is provided, identify what might be missing to solve the task.
+### Step 1: Understanding the User's Objective
+- Identify the core purpose of the task and what the user ultimately wants to achieve.
+- Summarize the user's real objective in your own words, based on the task description and any available data (Python code, Excel files, or no data at all).
+- If no data is provided, identify what might be missing to solve the task.
 
-    **User task description:**
-    {user_input}
+User task description:  
+{user_input}
 
-    **Provided data (Python code, Excel files, VRP file, or may be empty):**
-    {data}
+Provided data (Python code, Excel files, VRP file, or may be empty):  
+{data}
 
-    **Step 2: Target Value Handling**
-    - **Determine if the user has specified a target value for optimization** (e.g., a minimum distance, maximum efficiency, or cost constraint).
-    - If a target value is given, analyze whether it is:
-      - **Feasible** based on the problem constraints.
-      - **Challenging but possible** with improved optimization techniques.
-      - **Unrealistic**, requiring adjustments to constraints or expectations.
-    - If no target is explicitly given, infer what an optimal outcome might look like based on the problem description.
+Examples:
 
-    **Step 3: Data Quality & Missing Information**
-    - Analyze the available data and determine if it is **sufficient** for solving the optimization problem.
-    - Identify any missing **inputs, constraints, or parameters** that are required for accurate results.
-    - If the data is incomplete, suggest **which additional inputs the user should provide**.
+<user_input id="example-1">
+I need to optimize routes for 5 delivery vehicles, each with a max capacity of 160 units. The best-known solution for this problem is 521. Here's my E-n51-k5.vrp file.
+</user_input>
 
-    **Step 4: Problem Classification**
-    - Determine the **problem type** (e.g., logistics optimization, scheduling, vehicle routing, resource allocation).
-    - Define the **optimization focus**: What key aspects of the solution should be improved? (e.g., minimizing cost, reducing travel distance, maximizing efficiency).
-    - Consider whether the problem has a **strict mathematical formulation** or whether heuristic/metaheuristic methods are preferred due to complexity.
+<assistant_response id="example-1">
+This is a Capacitated Vehicle Routing Problem (CVRP) with 51 locations and 5 vehicles. Each vehicle has a capacity limit of 160. The objective is to minimize total route cost, with a known optimal value of 521. A two-phase heuristic combining Clarke-Wright Savings initialization and Simulated Annealing refinement is recommended to approach the target efficiently.
+</assistant_response>
 
-    **Step 5: Algorithm Selection & Justification**
-    - Prioritize **heuristic and metaheuristic methods** where applicable, as they are often more scalable and practical for large-scale problems.
-    - Based on the problem type, determine whether the solution should be:
-      - **A heuristic or metaheuristic approach** (preferred) (e.g., **A* search, simulated annealing, genetic algorithms, tabu search**).
-      - **An exact optimization approach** (only if strictly necessary) (e.g., **PuLP for linear programming**).
-    - **Justify why a heuristic approach is preferred**, considering:
-      - **Problem complexity** (e.g., NP-hard, large-scale datasets)
-      - **Computational efficiency needs** (e.g., real-time decision-making)
-      - **Flexibility to handle real-world constraints** beyond strict mathematical formulations
-    - If the user has specified a **target value**, evaluate whether:
-      - A heuristic-based approach is sufficient to reach it.
-      - Additional fine-tuning is needed for better approximation.
+<user_input id="example-2">
+I need to cut large steel sheets into specific widths to fulfill 8 customer orders. How can I minimize waste?
+</user_input>
 
-    **Step 6: Heuristic Optimization & Refinements**
-    - If a heuristic/metaheuristic method is used, determine if **further improvements are necessary**.
-    - If a **simple heuristic** (e.g., nearest neighbor) is chosen, outline **additional refinements** (e.g., `GUIDED_LOCAL_SEARCH`, genetic algorithm enhancements).
-    - If achieving the target value is difficult, suggest:
-      - Adjustments to constraints.
-      - A more advanced metaheuristic approach for better performance.
+<assistant_response id="example-2">
+This is a Cutting Stock Problem. The objective is to minimize material waste while meeting all customer demands. Heuristic techniques like First-Fit Decreasing or Guided Local Search are effective for this use case.
+</assistant_response>
 
-    **Step 7: Solution Type Evaluation**
-    - Favor **heuristic and approximate methods** unless an exact solution is strictly required.
-    - If the user requires an exact solution, clarify whether it is computationally feasible.
+### Step 2: Target Value Handling
+- Determine if the user has specified a target value for optimization (e.g., minimum distance, maximum efficiency, cost constraint).
+- If a target value is given, analyze whether it is:
+  - Feasible based on constraints
+  - Challenging but possible with improved techniques
+  - Unrealistic, requiring constraint or expectation changes
+- If no target is explicitly given, infer what an optimal outcome might look like
 
-    **Final Summary**
-    - **What is the user trying to achieve with this task?** (Summarize the user's real objective)
-    - **What is the purpose of solving this task?**
-    - **Is there a defined target value, and is it achievable with heuristics?**
-    - **How can the solution be optimized to achieve the best result, prioritizing heuristics and practical efficiency?**
-    - **Are there any missing inputs that should be collected before generating code?**
-    - **Which heuristic or metaheuristic approaches are most suitable, and why?**
-    - **Does the heuristic require further refinement or additional steps for better results?**
-    - **Is an exact solution required, or is a heuristic approach the preferred method?**
+### Step 3: Data Quality & Missing Information
+- Analyze the data and determine if it is sufficient
+- Identify any missing inputs, constraints, or parameters
+- Suggest what additional data the user should provide if needed
+
+### Step 4: Problem Classification
+- Determine the problem type (e.g., vehicle routing, resource allocation, scheduling)
+- Define the optimization focus: What should be improved? (cost, distance, fairness, etc.)
+- Consider whether the problem allows for a strict mathematical formulation, or whether heuristics are more appropriate
+
+### Step 5: Algorithm Selection & Justification
+- Prioritize heuristic and metaheuristic methods (e.g., A*, simulated annealing, genetic algorithms)
+- Use exact optimization only when strictly necessary (e.g., PuLP)
+- Justify the heuristic approach based on:
+  - Problem complexity (e.g., NP-hard)
+  - Computational needs (e.g., real-time)
+  - Real-world flexibility
+
+### Step 6: Heuristic Optimization & Refinements
+- If heuristics are used, determine whether refinements are needed
+- If a simple heuristic is selected, suggest enhancements (e.g., guided local search, hybrid algorithms)
+- If the target is difficult to reach, suggest:
+  - Constraint adjustments
+  - More advanced metaheuristics
+
+### Step 7: Solution Type Evaluation
+- Confirm whether a heuristic or exact solution is preferred
+- Explain if a heuristic can reasonably reach the target
+- Indicate if an exact method is needed and whether it is computationally feasible
+
+### Step 8: Output Format
+- Identify the expected response format (e.g., JSON, text, Excel, CSV)
+- Ensure that any generated code or explanation aligns with this output format
+- Clarify if the format refers to user-facing output or internal data representation
+
+### Final Summary
+- What is the user trying to achieve?
+- What is the purpose of solving this task?
+- Is there a defined target value, and is it achievable with heuristics?
+- How can the solution be optimized, prioritizing heuristics and practical efficiency?
+- Are there any missing inputs that should be collected?
+- Which heuristic or metaheuristic methods are most suitable, and why?
+- Does the heuristic require refinement?
+- Is an exact solution required, or is a heuristic approach better?
+- What output format should the solution follow, and how should that affect implementation?
+
+### Response formatting instruction:
+Your response should follow the structure defined by each step above and use corresponding section headers (e.g., “Step 1: Objective”) in your answer.
     """
 )
+
 
 
 CODE_PROMPT = ChatPromptTemplate.from_template(
@@ -231,116 +255,113 @@ CODE_PROMPT_NO_DATA = ChatPromptTemplate.from_template(
 
 HEURISTIC_PROMPT = ChatPromptTemplate.from_template(
     """
-    Your task is to generate fully functional, error-free Python code that implements an efficient heuristic-based solution to solve the optimization problem described by the user. The code must execute without issues on Python 3.9+.
+You are an AI assistant tasked with writing fully functional, error-free Python code that implements an efficient heuristic-based solution to the optimization problem described by the user. The code must execute correctly on Python 3.9+.
 
-    **Important:**  
-    You must explicitly identify, fully understand, and correctly apply **all relevant variables, constraints, values, parameters, and conditions** provided by the user or contained within the given data. Ensure that none of the essential details are overlooked, and that all parameters and constraints directly inform your code implementation.
+### Step 1: Understand the Problem and Requirements
+- Carefully read the problem description and provided data.
+- Identify all relevant variables, constraints, values, parameters, and conditions.
+- Ensure that none of the critical problem details are omitted in your solution.
 
-    Constraints:
-    - Ensure the Python code is free of syntax errors, undefined variables, or missing imports.
-    - Every function call must be defined properly before being used.
-    - Do not include deprecated functions or libraries.
-    - Check that all required packages exist in PyPI and are installable in Python 3.9+.
-    - Use only well-maintained packages (e.g., pandas, numpy, networkx).
-    - Avoid unnecessary dependencies—only include packages that are actually used in the code.
-    - Do not use exact package versions (==), use flexible versions (>=latest_stable_version).
-    - The generated code must run correctly without requiring modifications.
-    - All numerical values (e.g., floats, ints) must always be converted to strings before printing or concatenation.
-    - Direct string concatenation with numbers (`"text" + number`) is strictly forbidden.
-    - Always use f-strings or explicit conversion (`str(value)`) when handling numbers in print statements.
+Summary of the user's input:  
+{user_summary}
 
-    Summary of the user's input:
-    {user_summary}
+Problem type identified in earlier analysis:  
+{problem_type}
 
-    Problem type identified in earlier analysis:
-    {problem_type}
-    
-    The ultimate goal:
-    {goal}
+The ultimate goal:  
+{goal}
 
-    Optimization focus:
-    {optimization_focus}
+Optimization focus:  
+{optimization_focus}
 
-    Provided data (Python code, Excel files, `.vrp` files, or may be empty):
-    {data}
+Provided data (Python code, Excel files, .vrp files, or may be empty):  
+{data}
 
-    Resource Requirements:
-    {resource_requirements}
-    
-    Format the output according to the user's specified response format:
-    {response_format}
-    
-    Related for the format, ensure that the generated Python code produces output that exactly matches this format — including structure, layout, and data representation — without combining multiple values into a single field.
-    For example, if the output format is Excel, each value (e.g., name, time slot) must appear in its own cell. Do not place multiple values in a single cell using commas or other delimiters. Regardless of format, the output must be correctly structured, fully valid, and usable as-is in the target system (e.g., Excel, JSON parser, CSV reader) without requiring manual correction.
+Resource Requirements:  
+{resource_requirements}
 
-    
-    Choosing the best heuristic approach:
-    - Always use the best-known heuristic or algorithm available for the problems.
-    - For routing problems (VRP, TSP, logistics optimization): Use always best known heuristics, for example Nearest Neighbor (NN) or Clarke-Wright Savings for quick solutions. For more refined results, apply Simulated Annealing (SA) or Tabu Search. For large-scale problems, use Genetic Algorithms (GA) or Ant Colony Optimization (ACO).
-    - For cutting stock problems: Use First-Fit Decreasing (FFD) or Best-Fit Decreasing (BFD). For better results, apply Simulated Annealing (SA) or Genetic Algorithms (GA).
-    - For large-scale combinatorial problems: If a well-known heuristic exists, use it (e.g., GRASP, Variable Neighborhood Search). If the problem is complex, try evolutionary algorithms (Genetic Algorithm, Differential Evolution).
-    - For multi-objective optimization: Use NSGA-II (Non-Dominated Sorting Genetic Algorithm) to balance competing objectives.
-  - For complex scheduling and shift planning problems:
-    - Prefer metaheuristics as the primary approach due to the combinatorial complexity and constraint interactions:
-      - Use Iterated Local Search (ILS), Variable Neighborhood Search (VNS), or Tabu Search to efficiently explore the solution space and escape local optima.
-      - For highly variable or uncertain problems, apply Simulated Annealing (SA) or Genetic Algorithms (GA) to maintain diversity and robustness.
-      - If no single metaheuristic consistently performs well, use Hyperheuristics to dynamically select or generate heuristics based on performance feedback.
-    - If a faster but less flexible solution is acceptable, fall back to constructive heuristics (e.g., Greedy, Earliest Deadline First) as a baseline or initialization strategy.
+### Step 2: Select a Suitable Heuristic
+- Choose the most appropriate heuristic or metaheuristic for the problem.
+- Base your selection on the problem type and scalability requirements.
 
-    Handling VRP & Routing-Specific Files:
-    - If the provided files include `.vrp` files (Vehicle Routing Problem data):
-      - Ensure that all problem parameters (e.g., vehicle capacities, distance matrices) are correctly parsed.
-      - Use `networkx` or custom parsing functions to extract graph-based representations.
-      - Implement the best routing heuristic (e.g., Nearest Neighbor for quick solutions, Simulated Annealing for improved results).
-      - Ensure constraints such as vehicle capacity and time windows are respected.
-      - Optimize travel distance and minimize total route cost efficiently.
+Guidelines:
+- VRP / TSP: Nearest Neighbor, Clarke-Wright, Simulated Annealing, Tabu Search, GA, ACO
+- Cutting stock: FFD, BFD, SA, GA
+- Scheduling: ILS, VNS, Tabu Search, Hyperheuristics
+- Multi-objective: NSGA-II
 
-    Handling dependencies:
-    - The `requirements` field must include only essential dependencies.
-    - Ensure all packages are installable in Python 3.9+.
-    - If a package version is unavailable, replace it with a valid alternative.
-    - Use flexible dependency versions (>=latest_stable_version) instead of exact version pins (==).
-    - Remove unnecessary dependencies.
+### Step 3: Prepare the Python Code Structure
+- Ensure that the code is modular and clearly structured.
+- Every function must be defined before being used.
+- Avoid deprecated functions and libraries.
 
-    Example requirements.txt:
-    pandas>=1.3
-    numpy>=1.21
-    networkx>=2.6
-    deap>=1.3
-    scipy>=1.7
-    ortools>=9.2
-    openpyxl>=3.0
-    
-    **Handling File Inputs & Data Processing**
-    - If the provided files include **data sheets (Excel, CSV, etc.)**, ensure that:
-      - **The correct file handling libraries (`pandas`, `openpyxl`) are included** in the requirements.
-      - The code properly reads, processes, and integrates the data into the optimization model.
-      - **The data format is preserved** to avoid errors (e.g., numerical precision issues, encoding conflicts).
-    - **Avoid hardcoded paths**—ensure that input filenames are configurable.
+### Step 4: Handle File Input and Data Preprocessing
+- Include correct file-handling libraries (e.g., pandas, openpyxl).
+- Avoid hardcoded paths. Ensure filenames are configurable.
+- Verify that data is read and parsed correctly (e.g., VRP parsing, Excel sheets).
 
-    Ensuring correctness:
-    - The Python code must be executable without modifications.
-    - All functions must be properly defined before being called.
-    - All required packages in requirements.txt must be installable.
-    - No missing variables, functions, or logic errors.
-    - Ensure that all string literals ('text' or "text") are properly closed and do not break across lines unexpectedly.
-    - **Do NOT place `\n` inside a `.format()` placeholder or split it across lines .**
-    - If a newline is needed, **use f-strings or concatenate explicitly (`+ "\\n"`) instead**.
-    - Ensure that all `.format()` calls receive the correct number of arguments to prevent tuple index errors.
-    - Verify that all string formatting operations (e.g., `.format()`, f-strings) correctly reference valid variables.
-    - The generated code must run at least one test case to confirm correctness.
-    - **The code must print all essential information relevant to the problem statement.** This includes:
-      - The final solution or optimal configuration.
-      - Any intermediate results that are necessary for understanding how the solution was derived.
-      - Key performance metrics (e.g., total cost, distance traveled, execution time).
-      - **All numerical values (e.g., floats, ints) must be converted to strings before printing or concatenation.**
-      - **Every `print()` statement must ensure that numbers are converted to strings using `str(value)` or f-strings.**
-      - **Direct string concatenation with numbers (`"text" + number`) is strictly forbidden.**
-      - **Verify that all print statements handle numerical values correctly to prevent `TypeError`.**
+### Step 5: Ensure Output Matches Format
+- Output must conform to this required format:  
+  {response_format}
+- For example, if Excel output is requested, each value must be in a separate cell (no comma-separated strings).
+- Output must be valid, structured, and ready to use without manual cleanup.
 
-    The generated Python code must be structured, fully functional, and optimized for efficiency and scalability.
-    """
-)
+### Step 6: Validate Code Quality and Correctness
+- Code must run without syntax errors or undefined variables.
+- Use only installable packages (PyPI, Python 3.9+ compatible).
+- No exact version pins (==), use flexible versions (>=).
+- Every `print()` statement must convert numbers using `str()` or f-strings.
+- Forbidden: `"text" + number` string concatenation.
+
+### Step 7: Provide a Complete, Executable Output
+- Include working Python code and a minimal `requirements.txt`.
+- Code must include:
+  - Final solution
+  - Key metrics (e.g., total cost, execution time)
+  - Intermediate steps, if helpful
+- Requirements.txt must only include actual dependencies used in the code.
+
+**Example `requirements.txt` (ensure dependencies are available and installable):**
+pandas>=1.3
+numpy>=1.21
+networkx>=2.6
+deap>=1.3
+scipy>=1.7
+ortools>=9.2
+openpyxl>=3.0
+
+Your response must begin with a **brief explanation** of the selected heuristic, followed by the complete **Python code**, and then a correctly formatted **requirements.txt**.
+
+---
+
+### Example – Heuristic Code Generation (Generic)
+
+Input:
+<structured_state id="example-1">
+  <user_summary>Allocate resources to minimize total cost across tasks</user_summary>
+  <problem_type>Resource allocation</problem_type>
+  <optimization_focus>Cost minimization</optimization_focus>
+  <goal>Heuristic-based assignment</goal>
+  <data>task_input.csv</data>
+  <resource_requirements>Task costs and limits</resource_requirements>
+  <response_format>CSV</response_format>
+</structured_state>
+
+Output:
+<assistant_response id="example-1">
+# Heuristic used: Greedy allocation based on cost-benefit ratio
+```python
+import pandas as pd
+
+df = pd.read_csv("task_input.csv")
+df["ratio"] = df["benefit"] / df["cost"]
+df = df.sort_values(by="ratio", ascending=False)
+
+# Allocate resources...
+# ...
+</assistant_response> 
+""" )
+  
 
 
 DOCKER_FILES_PROMPT = ChatPromptTemplate.from_template(
@@ -380,54 +401,78 @@ DOCKER_FILES_PROMPT = ChatPromptTemplate.from_template(
 
 CODE_OUTPUT_ANALYSIS_PROMPT = ChatPromptTemplate.from_template(
     """
-Your task is to analyze the output generated by the Python code and extract the relevant information, such as numerical results or tables, to directly answer the user's question. This involves examining the output data, identifying any issues or discrepancies, and providing insights into the quality of the solution.
+You are an assistant that specializes in analyzing Python code outputs related to optimization problems. Your task is to extract the relevant information from the code output, evaluate the result’s consistency and correctness, and summarize it in a way that directly answers the user's original goal.
 
-**Original Question:**
+### Step 1: Extract Numerical Results and Tables
+- Identify and extract all relevant numerical values and structured outputs.
+- Do **not infer or add units** (e.g., meters, km, $) unless explicitly stated in the output.
+- Present the values as they appear — without changing wording or structure.
+- Structure them in a way that supports downstream logic or decision-making.
+
+### Step 2: Verify Against the User's Goal and Planned Steps
+- Check whether the result covers all parts of the planned process.
+- Identify any steps that appear missing, incomplete, or incorrect.
+- Match results against the original question and goal.
+
+### Step 3: Provide a Direct Answer to the User
+- Give a clear and concise answer to the original question.
+- Use only the information present in the output — do not speculate.
+
+### Step 4: Evaluate Accuracy and Consistency
+- Check for:
+  - Logical errors
+  - Internal inconsistencies
+  - Missing outputs
+  - Values that contradict the problem constraints
+- Flag anything unusual or incomplete.
+
+### Step 5: Recommend Improvements (if needed)
+- Suggest better formatting, clearer structure, or more detailed outputs.
+- Point out missing fields, units, or context.
+
+---
+
+**Original Question:**  
 {user_summary}
 
-**Original Goal:**
+**Original Goal:**  
 {original_goal}
 
-**Output of the Code:**
+**Output of the Code:**  
 {code_output}
 
-**Instructions:**
+---
 
-- **Extract Numerical Results and Tables:**
-  - Identify and extract all relevant numerical values and structured data from the output.
-  - Preserve the exact wording of extracted values and do not assume any missing details.
-  - **Units must only be included if explicitly mentioned in the output. If no unit is given, do not assume one.**
-  - **Do not invent or infer units such as meters, kilometers, or any other measurement if they are not explicitly present in the output.**
-  - Structure extracted numerical values clearly for further analysis.
+### Example – Output Analysis (Simplified)
 
-- **Verify Output Against the Planned Steps:**
-  - Check whether the generated output aligns with the expected steps outlined in "planned steps part".
-  - Identify any missing or skipped steps and document them.
-  - Ensure that each part of the planned process is reflected in the final output.
+Input:
+<output_analysis_input id="example-1">
+  <user_summary>What was the final route cost?</user_summary>
+  <original_goal>Minimize total distance in a 5-truck delivery task</original_goal>
+  <code_output>
+Final route cost: 534.8  
+Truck 1 → 0 → 8 → 3 → 0  
+Truck 2 → 0 → 2 → 5 → 6 → 0  
+...
+  </code_output>
+</output_analysis_input>
 
-- **Provide a Direct Answer to the Original Question:**
-  - Summarize the extracted results concisely.
-  - Ensure the response is directly relevant to the user's original question.
+Output:
+<assistant_response id="example-1">
+extracted_results:
+- Final route cost: 534.8
+- Routes per truck: listed
 
-- **Assess the Accuracy and Consistency of the Output:**
-  - Evaluate whether the extracted numerical results are logically consistent.
-  - Identify any potential errors, anomalies, or inconsistencies in the results.
-  - Flag any values that seem incorrect or misaligned with the problem constraints.
+direct_answer:
+The final route cost is 534.8, as reported by the output.
 
-- **Evaluate the Quality of the Solution:**
-  - Determine if the output effectively solves the original problem.
-  - Assess whether the solution meets the expected requirements and constraints.
+evaluation:
+The result includes the total cost, as expected. However, no unit (e.g., km) was provided, which limits interpretability.
 
-- **Summarize Key Findings:**
-  - Highlight the most critical outputs (e.g., total cost, optimization result, resource usage).
-  - Present extracted numerical values in a structured way that can be used for further decision-making.
-
-- **Offer Insights and Recommendations:**
-  - Provide observations about the effectiveness and efficiency of the solution.
-  - Suggest improvements or alternative approaches if applicable.
-
-**Your response must be structured, accurate, and avoid making assumptions about missing information.**
-    """
+improvement_notes:
+Recommend including the unit of measurement for route cost if available. Also, a summary of total demand served per vehicle could improve clarity.
+</assistant_response>
+"""
 )
 
 NEW_LOOP_CODE_PROMPT = ChatPromptTemplate.from_template(
@@ -573,73 +618,154 @@ NEW_LOOP_CODE_PROMPT_NO_DATA = ChatPromptTemplate.from_template(
 
 NEW_LOOP_HEURISTIC_PROMPT = ChatPromptTemplate.from_template(
     """
-    Your task is to generate a **strictly improved version** of the heuristic-based Python code that solves the optimization problem described by the user. This new version must be based on previous iterations and must **explicitly enhance the previous heuristic approach** by achieving a better objective value (e.g., lower cost, shorter distance, higher efficiency).
+You are an AI assistant tasked with producing a strictly improved heuristic-based solution for the given optimization task. Your goal is to generate new Python code that performs **better than the previous version**, in terms of objective value, computational efficiency, or solution quality.
 
-    **Step 1: Analyze the Previous Heuristic Solution**
-    - Review the last used heuristic and its results to determine if it **met the target goal**.
-    - Identify why the previous solution was **not optimal**:
-      - Did it fail to reach the given objective?
-      - Were there inefficiencies in the heuristic approach?
-      - Could computational performance be improved?
-    - If the previous heuristic met the goal, determine if **further improvements are still possible**.
-    - Identify **which parts of the previous approach were the main limitations** and require the most improvement.
+### Step 1: Analyze the Previous Heuristic Solution
+- Review the last used heuristic and its results.
+- Determine whether the previous solution reached the target goal.
+- Identify why the previous solution was **not optimal**:
+  - Was the result subpar (e.g. too long route, too high cost)?
+  - Could the algorithm's logic or parameters be improved?
+  - Were simpler heuristics used that could be enhanced or replaced?
+- If the result was acceptable, assess whether **further improvements** are still possible.
+- Pinpoint the **main limitations** of the previous approach that should be addressed.
 
-    **Step 2: Generate an Improved Heuristic Solution**
-    - Apply **a strictly improved heuristic approach** while ensuring that:
-      - If the problem is a minimization problem (e.g., distance, cost), the new result **must be lower** than the previous one.
-      - If the problem is a maximization problem (e.g., profit, efficiency), the new result **must be higher** than the previous one.
-    - Explore different heuristic refinements:
-      - **Enhance parameter tuning** (e.g., cooling schedules in simulated annealing, mutation rates in genetic algorithms).
-      - **Use hybrid heuristics** (combine two or more techniques if beneficial).
-      - **Introduce memory-based approaches** (e.g., Tabu Search to avoid cycling).
-      - **Optimize computational efficiency** by improving runtime and memory usage.
-    - Avoid unnecessary duplication of the previous code—focus on improvements.
-    - Clearly document all improvements with inline comments explaining why changes were made.
+### Step 2b: Heuristic Selection Strategy
+- Do **not** chain multiple metaheuristics blindly (e.g., NN → SA → Tabu → GA → ACO).
+- **Only apply one advanced heuristic or metaheuristic at a time**.
+- Decide whether to:
+  - Keep refining the current heuristic,
+  - Replace it with a different one,
+  - Or switch to a more global optimization approach (e.g., GA, ACO).
+- **Base the choice on measurable improvements**, e.g.:
+  - If simulated annealing improves solution by < 2%, try tabu search.
+  - If solution quality has plateaued, try a population-based method like GA.
+- **Avoid overfitting or redundant computation** by skipping heuristics that add no improvement.
+- Document clearly **why the chosen heuristic was applied**, and **why others were not**.
 
-    **Step 3: Validate and Compare the Improvement**
-    - **Run a performance comparison** between the previous heuristic and the improved version.
-    - If the new solution is **not strictly better**, retry optimization using a different heuristic refinement.
-    - Ensure that the new heuristic is **computationally efficient** and does not introduce unnecessary complexity.
-    - If the previous heuristic was **too simple**, explore **metaheuristics** (e.g., Simulated Annealing, Genetic Algorithms, Tabu Search).
-    - If the solution is **not consistently better**, introduce an iterative improvement mechanism.
+#### Recommended Libraries
+- Consider using **OR-Tools** for routing problems (e.g., CVRP, TSP):
+  - Includes advanced, well-tested solvers (e.g., local search, guided tree search, CP-SAT).
+  - Scales well with large instance sizes.
+  - Provides native handling for vehicle capacity, time windows, and distance matrices.
+  - Ideal when existing heuristics underperform or problem complexity increases.
 
-    **Step 4: Output the Best Heuristic Solution**
-    Your response must include:
+- If a task-specific or domain-specific **Python library** exists for the problem (e.g., `ortools`, `pulp` for LP/MILP, `deap` for evolutionary algorithms, `coinor` for operations research), **prefer using it** instead of building everything from scratch.
 
-    - **python_code**: The improved heuristic-based Python code that strictly improves the previous result.
-    - **requirements**: A list of all Python dependencies (e.g., numpy, scipy, networkx) needed to run the generated code.
-    - **performance_comparison**: A summary of how the new heuristic solution compares to the previous one.
-    - **objective_value**: The final computed value of the objective function in both the previous and new versions.
-    - **test_cases**: A brief description of test cases used to verify that the new solution is indeed better.
+- Using established libraries improves:
+  - **Solution quality** (more robust algorithms)
+  - **Development speed** (less boilerplate code)
+  - **Reliability and reproducibility**
 
-    **Original user input:**
-    {user_summary}
+- Always check if a **specialized solver or heuristic framework** already exists before designing a custom algorithm.
 
-    **Original problem type:**
-    {problem_type}
+### Step 3: Validate and Compare the Improvement
+- Include logic to **compare** the new and previous solution performance.
+- If the new solution is not better, retry with a different refinement.
+- Compare:
+  - Objective values (before and after)
+  - Runtime or memory usage (if relevant)
+  - Solution quality or feasibility
+- If the previous method was too simple, try **metaheuristics** or multi-phase strategies.
 
-    **Optimization focus:**
-    {optimization_focus}
+### Step 4: Output the Best Heuristic Solution
+Your response must include the following structured output:
 
-    **Results from prior heuristic solutions:**
-    {previous_results}
-    
-    **Last used heuristic-based code:**
-    {previous_code}
+- **python_code**: The Python code implementing the improved heuristic.
+- **requirements**: List of Python dependencies (e.g. numpy, networkx).
+- **performance_comparison**: Explanation of how this version is better than the last.
+- **objective_value**: A numeric comparison of the old and new solution (e.g. "previous: 524.7 → new: 512.3").
+- **test_cases**: Describe the test cases used to verify the improvement.
 
-    **Provided data (Python code, Excel files, VRP file, or may be empty):**
-    {data}
-    
-    **Resource Requirements:**
-    {resource_requirements}
+### Step 5: Handle Numerical Precision
+- All distance and cost calculations must retain full floating-point precision.
+- Do **not** round, truncate, or cast floats to integers unless **explicitly required** by the problem.
+- Avoid using `astype(int)`, `int()`, `round()` or similar unless justified.
+- Preserving precision ensures that all comparisons between solutions are accurate and not distorted by rounding artifacts.
 
-    **Final Requirements**
-    - Ensure the generated heuristic-based code **is fully functional, free from syntax errors, and improves on the previous version**.
-    - The new objective value **must be strictly better** than the previous one.
-    - If the new solution is **not better**, retry with a different heuristic refinement.
-    - Ensure that the code outputs the **final computed objective value** clearly for easy comparison.
-    - Automate testing: Generate test cases that verify the improvement.
-    - Optimize runtime efficiency **without compromising solution quality**.
+### Step 6: Handle Requirements Output
+- Your response must include a `requirements` list with only the Python packages actually used in the code.
+- Use flexible version specifiers (e.g., `pandas>=1.3`), **not pinned versions** (`==`).
+- All packages must be compatible with Python 3.9+ and available via PyPI.
+- Do **not** include unnecessary or unused dependencies.
+- If a package is not available, choose a suitable alternative.
+
+**Example `requirements.txt` (ensure dependencies are available and installable):**
+pandas>=1.3
+numpy>=1.21
+networkx>=2.6
+deap>=1.3
+scipy>=1.7
+ortools>=9.2
+openpyxl>=3.0
+
+---
+
+**Original user input:**  
+{user_summary}
+
+**Original problem type:**  
+{problem_type}
+
+**Optimization focus:**  
+{optimization_focus}
+
+**Results from prior heuristic solutions:**  
+{previous_results}
+
+**Last used heuristic-based code:**  
+{previous_code}
+
+**Provided data (Python code, Excel files, VRP file, or may be empty):**  
+{data}
+
+**Resource Requirements:**  
+{resource_requirements}
+
+---
+
+### Example – Heuristic Refinement Round (Simplified)
+
+Input:
+<structured_state id="example-1">
+  <user_summary>Minimize total route cost with 3 trucks and 20 delivery points.</user_summary>
+  <problem_type>CVRP</problem_type>
+  <optimization_focus>Route cost</optimization_focus>
+  <data>vrp-E-n20-k3.vrp</data>
+  <resource_requirements>Truck cap: 50; distance matrix; demands</resource_requirements>
+  <previous_results>Cost = 412.3 (Nearest Neighbor)</previous_results>
+  <previous_code>
+    import networkx as nx
+    # Nearest Neighbor logic...
+  </previous_code>
+</structured_state>
+
+Output:
+<assistant_response id="example-1">
+# Heuristic used: Nearest Neighbor + Simulated Annealing
+import pandas as pd
+import networkx as nx
+import random, math
+
+# Initial NN → SA refinement...
+# Final cost: 386.7
+
+requirements:
+pandas>=1.3  
+networkx>=2.6
+ortools>=9.2
+openpyxl>=3.0
+
+performance_comparison:
+SA reduced cost from 412.3 → 386.7
+
+objective_value:
+previous = 412.3  
+new = 386.7
+
+test_cases:
+- vrp-E-n20-k3.vrp (default input)
+</assistant_response>
     """
 )
 
@@ -665,68 +791,111 @@ FINAL_REPORT_PROMPT = ChatPromptTemplate.from_template(
 
 CODE_FIXER_PROMPT = ChatPromptTemplate.from_template(
     """
-    You are an experienced software engineer specializing in debugging and fixing Python code. Your task is to analyze and resolve errors in the provided code, which failed to execute in a Docker container.
+You are an experienced software engineer specializing in debugging and fixing Python code. Your task is to analyze and resolve errors in the provided code, which failed to execute in a Docker container.
 
-    **Step 1: Error Analysis**
-    - Examine the Docker logs to determine the exact cause of failure.
-    - Categorize the error into one of the following types:
-      - **SyntaxError / IndentationError** → Formatting or syntax issue.
-      - **ImportError / ModuleNotFoundError** → Missing, deprecated, or OS-incompatible package.
-      - **TypeError / ValueError** → Incorrect data types or function misuse.
-      - **RuntimeError** → Execution-related failure (e.g., missing variable, infinite loop).
-      - **EnvironmentError** → Docker-related issue, such as incorrect file paths or missing system dependencies.
-    - If the error is related to package dependencies, verify that the requirements.txt file is formatted correctly.
-      - **Important:** Each dependency should be listed on a separate line.
-      - If the file contains dependencies separated by commas or incorrect line breaks, they must be corrected
-    - Provide a clear explanation of why the error occurred before making any modifications.
-    
-    **Handling Syntax Errors (`SyntaxError: EOL while scanning string literal` & similar issues)**
-    - Ensure that all **string literals ('text' or "text") are correctly closed**.
-    - Look for **concatenated strings that span multiple lines without explicit line breaks**.
-    - Ensure that `.format()` calls do not contain misplaced newlines.
+### Response Format
+Return a JSON object with the following fields:
+- **fixed_python_code**: The corrected Python code after fixing the issue.
+- **requirements**: List of required dependencies needed to run the fixed code.
+- **requirements_changed**: Boolean indicating if the requirements were modified. This should be set to **true** even if the change was only a formatting fix (e.g., splitting dependencies onto separate lines or correcting commas).
+- **fix_description**: Explanation of what was fixed and why.
+- **original_error**: Summary of the error from Docker logs.
 
-    **Step 2: Code Fixing**
-    - Apply only the necessary modifications to resolve the issue while preserving the original logic.
-    - If the issue is related to package compatibility:
-      - Verify whether the package exists and is supported in Python 3.9+.
-      - Ensure that **package versions do not introduce incompatibilities** that could cause failures.
-      - If a package is deprecated or unavailable, suggest a suitable replacement.
-      - Avoid using **hard version locks (`==`), unless necessary** to prevent conflicts.
-      - Check that all dependencies in `requirements.txt` **work together without breaking the runtime environment**.
-    - If an import is missing:
-      - Determine whether it should be installed or replaced with an alternative.
-      - Remove unnecessary imports if they are not used.
-    - If the error is Docker-related:
-      - Fix incorrect file paths by using relative paths.
-      - Ensure that required system dependencies are installed within the container.
-      - Handle missing environment variables properly.
-    - Do not modify external data files or paths unless required.
+### Step 1: Error Analysis
+- Examine the Docker logs to determine the exact cause of failure.
+- Categorize the error into one of the following types:
+  - **SyntaxError / IndentationError** → Formatting or syntax issue.
+  - **ImportError / ModuleNotFoundError** → Missing, deprecated, or OS-incompatible package.
+  - **TypeError / ValueError** → Incorrect data types or function misuse.
+  - **RuntimeError** → Execution-related failure (e.g., missing variable, infinite loop).
+  - **EnvironmentError** → Docker-related issue, such as incorrect file paths or missing system dependencies.
+- If the error is related to package dependencies, verify that the requirements.txt file is formatted correctly:
+  - **Important:** Each dependency should be listed on a separate line.
+  - If the file contains dependencies separated by commas or incorrect line breaks, they must be corrected.
+- Provide a clear explanation of why the error occurred before making any modifications.
 
-    **Step 3: Validation**
-    - Verify that the corrected code executes without errors in a simulated environment.
-    - Ensure that the fix does not introduce new issues.
-    - If the first fix attempt fails, apply an alternative solution and update the response.
+#### Notes on Syntax Errors (`SyntaxError: EOL while scanning string literal` & similar)
+- Ensure that all **string literals ('text' or "text") are correctly closed**.
+- Look for **concatenated strings that span multiple lines without explicit line breaks**.
+- Ensure that `.format()` calls do not contain misplaced newlines.
 
-    **Docker Container Logs (Error Details)**:
-    {docker_output}
+### Step 2: Dependency & Environment Fixes
+- Review the `requirements.txt` file:
+  - Ensure proper formatting (one dependency per line, no commas).
+  - Use **flexible versions** (e.g., `pandas>=1.3`) instead of hard pins (`==`) unless necessary.
+  - Ensure compatibility with **Python 3.9+**.
+  - Remove unused dependencies and replace deprecated ones if needed.
+  - If you make any change to the requirements file (even formatting), set `requirements_changed = true`.
+- For Docker-related errors:
+  - Fix incorrect or hardcoded file paths using relative paths.
+  - Ensure required **system-level dependencies** are installed inside the Docker container.
+  - Properly handle **missing environment variables**.
+- Do **not** modify external files unless explicitly required.
 
-    **Original Code**:
-    {code}
+### Step 3: Code Correction
+- Address all errors related to:
+  - Syntax (unclosed strings, indentation, etc.)
+  - Missing or unused imports
+  - Wrong data types, invalid parameters, misused functions
+  - Logic errors, infinite loops, or uninitialized variables
+- Apply **only necessary changes** to preserve original logic and structure.
+- Avoid excessive rewrites or refactoring unless essential to make the code run.
 
-    **Original Requirements**:
-    {requirements}
+### Step 4: Validation
+- Verify that the corrected code executes **without errors** in a simulated environment.
+- Ensure the solution is stable and does **not introduce new bugs**.
+- If the fix attempt fails, provide an **alternative correction**.
 
-    **Original Resources (Do not modify unless required)**:
-    {resources}
-    
-    You can comment and tell on the file used fixes, heuristics etc. so user know what have done.
+### Docker Container Logs (Error Details):
+{docker_output}
 
-    **Response Format**
-    Return a JSON object with the following fields:
-    - **fixed_python_code**: The corrected Python code after fixing the issue.
-    - **requirements**: List of required dependencies needed to run the fixed code.
-    - ****requirements_changed**: Boolean indicating if the requirements were modified. This should be set to **true** even if the change was only a formatting fix (e.g., splitting dependencies onto separate lines or correcting commas).
-    - **fix_description**: Explanation of what was fixed and why.
-    - **original_error**: Summary of the error from Docker logs.
-    """
+### Original Code:
+{code}
+
+### Original Requirements:
+{requirements}
+
+### Original Resources (Do not modify unless required):
+{resources}
+
+You may add inline comments to explain what changes were made and why, so the user can understand the applied fixes.
+
+### Example – Code Fix (Simplified)
+
+Input:
+<codefix_input id="example-1">
+  <docker_output>
+SyntaxError: unterminated string literal (line 219)
+  </docker_output>
+
+  <code>
+plan_output += '{{}}'.format(manager.IndexToNode(index))
+  </code>
+
+  <requirements>
+pandas, numpy, ortools
+  </requirements>
+</codefix_input>
+
+Output:
+<assistant_response id="example-1">
+# Fixed: unterminated string and invalid requirements format
+plan_output += '{{}}'.format(manager.IndexToNode(index))  # now complete
+
+requirements:
+pandas>=1.3  
+numpy>=1.21  
+ortools>=9.2
+
+fix_description:
+Closed unterminated string literal. Reformatted requirements.txt to separate lines.
+
+original_error:
+SyntaxError + invalid requirements formatting
+
+requirements_changed: true
+</assistant_response>
+"""
 )
+
+
