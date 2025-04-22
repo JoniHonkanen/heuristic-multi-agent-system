@@ -129,6 +129,7 @@ class FinalReport(BaseModel):
 class AgentState(TypedDict):
     userInput: str  # Original user input
     iterations: int  # Number of iterations (Not used yet)
+    fixIterations:int # how many times code has been fixed
     promptFiles: List[str]  # Given files whats been uploaded
     messages: List[str]
     purpose: Purpose  # What user want to achieve
@@ -139,3 +140,4 @@ class AgentState(TypedDict):
     result: OutputOfCode  # Results of the code execution - answer, explanation, etc.
     results: List[OutputOfCode]
     solution_method: SolutionMethod
+    optimizedOnce: bool

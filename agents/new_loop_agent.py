@@ -11,6 +11,9 @@ async def new_loop_logic(state: AgentState) -> Code:
     inputs = state["purpose"]
     last_code = state["code"]
     last_output = state["result"]
+    # Nollaa korjauslaskuri
+    state["fixIterations"] = 0
+    state["optimizedOnce"] = True
 
     # Select the appropriate prompt based on the solution method
     if state["solution_method"] == SolutionMethod.HEURISTIC:

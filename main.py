@@ -40,11 +40,12 @@ def decide_problem_analysis(state: AgentState) -> str:
     return "code_generator"
 
 
-# Define a function to determine the next step based on 'proceed'
-def decide_next_step(state: AgentState):
-    return state[
-        "proceed"
-    ]  # This should return either 'continue', 'new', 'done', 'fix' or 'cancel'
+def decide_next_step(state: AgentState) -> str:
+    if state.get("fixIterations", 0) >= 4:
+        if not state.get("optimizedOnce", False):
+            return decide_problem_analysis(state)  # jos haluat uudelleenkäyttää funktiota
+        return "new_loop"
+    return state["proceed"]
 
 
 def determine_next_step(state: AgentState) -> str:
@@ -92,6 +93,7 @@ workflow.add_conditional_edges(
     path_map={
         "fix": "code_fixer",  # Fix the code
         "continue": "output_analyzer",  # Proceed to the next node
+        "new_loop": "new_loop",  # Start a new optimization round
     },
 )
 workflow.add_edge("code_fixer", "start_docker")  # Try to execute the fixed code again
@@ -211,9 +213,11 @@ async def main(message: cl.Message):
         userInput=message.content,
         messages=[message.content],
         iterations=0,
+        fixIterations=0,
+        optimizedOnce=False,
         promptFiles=formatted_data,
     )
     config = RunnableConfig(recursion_limit=50)
 
     # Invoke the agent with the state
-    await app.ainvoke(state,config)
+    await app.ainvoke(state, config)
