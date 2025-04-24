@@ -21,6 +21,7 @@ class ProblemClass(str, Enum):
     VRP = "vehicle_routing"
     KNAPSACK = "knapsack"
     SHIFT_SCHEDULING = "shift_scheduling" #work hours
+    WAREHOUSE_OPTIMIZATION = "warehouse_optimization" # warehouse
     OTHER = "other"
 
 

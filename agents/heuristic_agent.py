@@ -13,6 +13,7 @@ async def apply_heuristic_logic(state: AgentState) -> Code:
         ProblemClass.VRP: VRP,
         ProblemClass.KNAPSACK: KNAPSACK,
         ProblemClass.SHIFT_SCHEDULING: SHIFT_SCHEDULING,
+        ProblemClass.WAREHOUSE_OPTIMIZATION: WAREHOUSE_OPTIMIZATION,
         ProblemClass.OTHER: OTHER,
     }
 
@@ -20,9 +21,6 @@ async def apply_heuristic_logic(state: AgentState) -> Code:
         return problem_guidance_map.get(problem_type, OTHER)
 
     guidance = get_guidance(problem_type)
-
-    print(f"Problem type: {problem_type}")
-    print(f"guidance: {guidance}")
 
     # Select the appropriate heuristic prompt
     prompt = HEURISTIC_PROMPT.format(
@@ -36,8 +34,6 @@ async def apply_heuristic_logic(state: AgentState) -> Code:
         problem_specific_guidelines=guidance["guidelines"],
         problem_specific_example=guidance["example"],
     )
-
-    print(f"\nPrompt!!!!!!!:\n {prompt}")
 
     # Interact with the LLM
     structured_llm = llm_code.with_structured_output(Code)

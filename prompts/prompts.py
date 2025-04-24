@@ -277,9 +277,7 @@ HEURISTIC_PROMPT = ChatPromptTemplate.from_template(
 You are an AI assistant tasked with writing fully functional, error-free Python code that implements an efficient heuristic-based solution to the optimization problem described by the user. The code must execute correctly on Python 3.9+.
 
 ### Step 1: Understand the Problem and Requirements
-- Carefully read the problem description and provided data.
-- Identify all relevant variables, constraints, values, parameters, and conditions.
-- Ensure that none of the critical problem details are omitted in your solution.
+Carefully read and process the entire problem description and provided data. Identify all relevant variables, constraints, values, parameters, and conditions. Do not omit or reinterpret any user-provided details. All provided data must be used as-is. Modifying, simplifying, or restructuring input is strictly forbidden.
 
 Summary of the user's input:  
 {user_summary}
@@ -300,66 +298,89 @@ Resource Requirements:
 {resource_requirements}
 
 ### Step 2: Select a Suitable Heuristic
-- Choose the most appropriate heuristic or metaheuristic for the problem.
-- Base your selection on the problem type and scalability requirements.
+Choose the most appropriate heuristic or metaheuristic based on the problem type and scale. Explain the selected approach briefly before the code. The heuristic must be correctly applied and must align with the user's goal and optimization focus.
 
+You must also follow the domain-specific guidance provided below. These guidelines contain essential constraints, expectations, and best practices that apply to the specific type of problem.
+
+**Failure to apply the instructions below accurately will result in an invalid solution. Do not skip or override any rule or requirement.**
+
+Problem-Specific Guidelines:  
 {problem_specific_guidelines}
 
 ### Step 3: Prepare the Python Code Structure
-- Ensure that the code is modular and clearly structured.
-- Every function must be defined before being used.
-- Avoid deprecated functions and libraries.
+Structure the code modularly. Define all functions before they are used. Avoid deprecated functions and ensure all libraries used are compatible with Python 3.9+. All required imports must be present and error-free.
 
 ### Step 4: Handle File Input and Data Preprocessing
-- Include correct file-handling libraries (e.g., pandas, openpyxl).
-- Avoid hardcoded paths. Ensure filenames are configurable.
-- Verify that data is read and parsed correctly (e.g., VRP parsing, Excel sheets).
+Use correct file-handling libraries (e.g., pandas, openpyxl). Do not use hardcoded file paths; filenames must be configurable. Ensure that input data is read and processed without altering the original structure or content.
 
 ### Step 5: Ensure Output Matches Format
-- Output must conform to this required format:  
-  {response_format}
-- For example, if Excel output is requested, each value must be in a separate cell (no comma-separated strings).
-- Output must be valid, structured, and ready to use without manual cleanup.
+Output must exactly follow this required format:  
+{response_format}  
+If Excel or other structured output is expected, do not combine multiple values into single fields. Output must be valid, structured, and ready to use without manual correction.
 
 ### Step 6: Validate Code Quality and Correctness
-- Code must run without syntax errors or undefined variables.
-- Use only installable packages (PyPI, Python 3.9+ compatible).
-- No exact version pins (==), use flexible versions (>=).
-- Every `print()` statement must convert numbers using `str()` or f-strings.
-- Forbidden: `"text" + number` string concatenation.
+Code must run without syntax errors, undefined variables, or runtime issues. Use only installable packages from PyPI that are compatible with Python 3.9+. Do not use exact version pins (`==`). Use flexible versions (`>=`) only.
 
-### Step 7: Provide a Complete, Executable Output
-- Include working Python code and a minimal `requirements.txt`.
-- Code must include:
-  - Final solution
-  - Key metrics (e.g., total cost, execution time)
-  - Intermediate steps, if helpful
-- Requirements.txt must only include actual dependencies used in the code.
+### Step 7: Required Output and Metrics
+The generated code must print the final solution, relevant intermediate outputs if needed, and clear key metrics (e.g., total cost, distance, or execution time). Output must be human-readable and support visual validation of the result.
 
-**Example `requirements.txt` (ensure dependencies are available and installable):**
-pandas>=1.3
-numpy>=1.21
-networkx>=2.6
-deap>=1.3
-scipy>=1.7
-ortools>=9.2
+### Step 8: Requirements File
+Provide an accurate and minimal `requirements.txt` that includes only the packages actually used in the code.
+
+Example:
+pandas>=1.3  
+numpy>=1.21  
+networkx>=2.6  
+scipy>=1.7  
+ortools>=9.2  
 openpyxl>=3.0
 
-### Step 8: Print Results for Validation
-- Your generated Python code must include output that prints the resulting solution in a human-readable format.
-- This applies **even if the result is also written to a file (e.g., Excel)**.
-- At minimum, print:
-  - The **total objective value** (e.g., total route distance, total cost, or fitness).
-  - A **summary of the solution** (e.g., routes per vehicle, selected actions, or other domain-specific output).
-- This output is required to facilitate quick visual inspection, debugging, and testing of the solution.
-- Avoid silent or implicit results — make the outcome observable directly via `print()` statements.
+### Step 9: Print Results for Validation
+Always include print statements that display essential outputs. This includes the total objective value and a summary of the solution. If the result is also saved to a file, it must still be printed to the console. Always use f-strings or `str()` for number formatting. Direct concatenation of strings and numbers (e.g., "value: " + 5) is strictly forbidden.
 
-Your response must begin with a **brief explanation** of the selected heuristic, followed by the complete **Python code**, and then a correctly formatted **requirements.txt**.
+### Step 10: Final Validation Pass
+Before returning the final code, confirm that:
+- All strings are well-formed (no unterminated strings)
+- All `.format()` calls use correct arguments and are not broken across lines
+- All newlines in strings are escaped (`\\n`) and not literal line breaks
+- All control structures (if, for, while) are properly closed and correctly indented
+- No `TypeError` occurs from improper print or string concatenation
 
----
+### Reference Example for Structure and Style
 
+Review the following example before writing your response.  
+You must follow the structure, practices, and formatting shown in this example.
+
+This includes:
+- Variable naming and organization
+- Import and library usage
+- Output formatting and required print statements
+- Adherence to data parsing and use instructions
+- Requirements file structure
+
+Do not replicate the content exactly, but follow its patterns and conventions strictly.
+
+Example:
 {problem_specific_example}
-""" )
+
+### Critical Errors to Avoid
+Any of the following will result in an invalid response:
+- Syntax errors or missing function/variable definitions
+- Using "text" + number (must use `str()` or f-strings)
+- Omitting required packages or including unused ones
+- Ignoring input format or altering provided data
+- Returning malformed or incomplete output
+- Using deprecated, unavailable, or non-installable libraries
+- Providing silent or ambiguous output without key metrics
+
+Your response must include:
+1. A brief explanation of the selected heuristic  
+2. Complete, executable Python code  
+3. A valid and minimal requirements.txt  
+All outputs must run successfully in Python 3.9+ without manual editing.
+"""
+)
+
   
 
 
@@ -617,9 +638,17 @@ NEW_LOOP_CODE_PROMPT_NO_DATA = ChatPromptTemplate.from_template(
 
 NEW_LOOP_HEURISTIC_PROMPT = ChatPromptTemplate.from_template(
     """
-You are an AI assistant tasked with producing a strictly improved heuristic-based solution for the given optimization task. Your goal is to generate new Python code that performs **better than the previous version**, in terms of objective value, computational efficiency, or solution quality.
+You are an AI assistant tasked with producing a **strictly improved heuristic-based solution** for the given optimization task.  
+Your goal is to generate **Python code that performs better than the previous version** in one or more of the following:
+- Objective value (e.g., lower cost, shorter distance, better fitness)
+- Computational efficiency (e.g., faster runtime, fewer iterations)
+- Structural quality of solution (e.g., fewer constraint violations, better distribution)
+
+**A new version that performs the same or worse is not acceptable.**  
+You must explore **a clearly more effective heuristic approach** or a significant refinement of the previous one.
 
 ### Step 1: Analyze the Previous Heuristic Solution
+You are continuing an optimization process. Your next solution must **strictly improve** over the previous one in terms of cost, quality, or efficiency.
 - Review the last used heuristic and its results.
 - Determine whether the previous solution reached the target goal.
 - Identify why the previous solution was **not optimal**:
@@ -636,36 +665,24 @@ You are an AI assistant tasked with producing a strictly improved heuristic-base
   - Or replace it with a **fundamentally different heuristic framework**.
 - Generating two iterations with essentially the **same algorithm and logic is considered invalid**.
 
-### Step 2b: Heuristic Selection Strategy
+### Step 2: Heuristic Selection Strategy
 - Do **not** chain multiple metaheuristics blindly (e.g., NN → SA → Tabu → GA → ACO).
 - **Only apply one advanced heuristic or metaheuristic at a time**.
 - Decide whether to:
   - Keep refining the current heuristic,
   - Replace it with a different one,
   - Or switch to a more global optimization approach (e.g., GA, ACO).
-- **Base the choice on measurable improvements**, e.g.:
-  - If simulated annealing improves solution by < 2%, try tabu search.
-  - If solution quality has plateaued, try a population-based method like GA.
 - **Avoid overfitting or redundant computation** by skipping heuristics that add no improvement.
 - Document clearly **why the chosen heuristic was applied**, and **why others were not**.
 
-#### Recommended Libraries
-- Consider using **OR-Tools** for routing problems (e.g., CVRP, TSP):
-  - Includes advanced, well-tested solvers (e.g., local search, guided tree search, CP-SAT).
-  - Scales well with large instance sizes.
-  - Provides native handling for vehicle capacity, time windows, and distance matrices.
-  - Ideal when existing heuristics underperform or problem complexity increases.
+- The primary goal is to improve performance **over the previous result**.  
+- You must clearly justify how the new approach is expected to **outperform** the last one.
+- If the new solution **does not improve** the objective value, it must be considered a failure, and another method should be attempted.
 
-- If a task-specific or domain-specific **Python library** exists for the problem (e.g., `ortools`, `pulp` for LP/MILP, `deap` for evolutionary algorithms, `coinor` for operations research), **prefer using it** instead of building everything from scratch.
-
-- Using established libraries improves:
-  - **Solution quality** (more robust algorithms)
-  - **Development speed** (less boilerplate code)
-  - **Reliability and reproducibility**
-
-- Always check if a **specialized solver or heuristic framework** already exists before designing a custom algorithm.
+{problem_specific_guidelines}
 
 ### Step 3: Validate and Compare the Improvement
+If the new solution does not **strictly outperform the previous result**, it must be rejected and replaced with a better heuristic. A regression or equivalent result is considered a failure in this context.
 - Include logic to **compare** the new and previous solution performance.
 - If the new solution is not better, retry with a different refinement.
 - Compare:
@@ -701,7 +718,6 @@ Your response must include the following structured output:
 pandas>=1.3
 numpy>=1.21
 networkx>=2.6
-deap>=1.3
 scipy>=1.7
 ortools>=9.2
 openpyxl>=3.0
@@ -746,48 +762,7 @@ openpyxl>=3.0
 
 ---
 
-### Example – Heuristic Refinement Round (Simplified)
-
-Input:
-<structured_state id="example-1">
-  <user_summary>Minimize total route cost with 3 trucks and 20 delivery points.</user_summary>
-  <problem_type>CVRP</problem_type>
-  <optimization_focus>Route cost</optimization_focus>
-  <data>vrp-E-n20-k3.vrp</data>
-  <resource_requirements>Truck cap: 50; distance matrix; demands</resource_requirements>
-  <previous_results>Cost = 412.3 (Nearest Neighbor)</previous_results>
-  <previous_code>
-    import networkx as nx
-    # Nearest Neighbor logic...
-  </previous_code>
-</structured_state>
-
-Output:
-<assistant_response id="example-1">
-# Heuristic used: Nearest Neighbor + Simulated Annealing
-import pandas as pd
-import networkx as nx
-import random, math
-
-# Initial NN → SA refinement...
-# Final cost: 386.7
-
-requirements:
-pandas>=1.3  
-networkx>=2.6
-ortools>=9.2
-openpyxl>=3.0
-
-performance_comparison:
-SA reduced cost from 412.3 → 386.7
-
-objective_value:
-previous = 412.3  
-new = 386.7
-
-test_cases:
-- vrp-E-n20-k3.vrp (default input)
-</assistant_response>
+{problem_specific_example}
     """
 )
 
@@ -836,10 +811,17 @@ Return a JSON object with the following fields:
   - If the file contains dependencies separated by commas or incorrect line breaks, they must be corrected.
 - Provide a clear explanation of why the error occurred before making any modifications.
 
-#### Notes on Syntax Errors (`SyntaxError: EOL while scanning string literal` & similar)
-- Ensure that all **string literals ('text' or "text") are correctly closed**.
-- Look for **concatenated strings that span multiple lines without explicit line breaks**.
-- Ensure that `.format()` calls do not contain misplaced newlines.
+#### Special Notes on Syntax Errors (e.g., SyntaxError: EOL while scanning string literal)
+- These are often caused by:
+  - Missing or unclosed quotes (' or ")
+  - Improperly broken strings across lines
+  - Newlines placed outside of strings rather than within (\\n)
+- Ensure that:
+  - All string literals ('text' or "text") are correctly closed.
+  - Format strings are syntactically valid.
+  - Look for concatenated strings that span multiple lines without explicit line breaks.
+  - If a string is split across lines, use string concatenation or proper \\ line continuation.
+  - Ensure that `.format()` calls do not contain misplaced newlines.
 
 ### Step 2: Dependency & Environment Fixes
 - Review the `requirements.txt` file:
@@ -868,6 +850,17 @@ Return a JSON object with the following fields:
 - Ensure the solution is stable and does **not introduce new bugs**.
 - If the fix attempt fails, provide an **alternative correction**.
 
+### Step 5: Return Full Corrected Code
+- You must return the full corrected version of the Python source file.
+- This means the entire program — not just the modified lines or snippets — even if most of the code is unchanged.
+- Include any required imports, function definitions, or structural code needed to make the file runnable on its own.
+- This should be returned in the `fixed_python_code` field, as a complete and standalone script.
+
+This is critically important:
+- Do not use placeholder text such as "rest of the code remains unchanged" or "see above".
+- Do not skip sections that were not directly modified.
+- A complete response is required to ensure that the corrected code can be tested, executed, and reused as-is.
+
 ### Docker Container Logs (Error Details):
 {docker_output}
 
@@ -882,7 +875,7 @@ Return a JSON object with the following fields:
 
 You may add inline comments to explain what changes were made and why, so the user can understand the applied fixes.
 
-### Example – Code Fix (Simplified)
+### Example – Code Fix (1): Syntax Error
 
 Input:
 <codefix_input id="example-1">
@@ -891,7 +884,7 @@ SyntaxError: unterminated string literal (line 219)
   </docker_output>
 
   <code>
-plan_output += '{{}}'.format(manager.IndexToNode(index))
+plan_output += ''.format(manager.IndexToNode(index))
   </code>
 
   <requirements>
@@ -901,21 +894,105 @@ pandas, numpy, ortools
 
 Output:
 <assistant_response id="example-1">
-# Fixed: unterminated string and invalid requirements format
-plan_output += '{{}}'.format(manager.IndexToNode(index))  # now complete
+Fixed Python Code:
+plan_output += '' + str(manager.IndexToNode(index)) + '\\n'
 
-requirements:
-pandas>=1.3  
-numpy>=1.21  
+Requirements (reformatted):
+pandas>=1.3
+numpy>=1.21
 ortools>=9.2
 
-fix_description:
-Closed unterminated string literal. Reformatted requirements.txt to separate lines.
+Fix Description:
+- Replaced broken format call with string concatenation.
+- Reformatted requirements into separate lines.
 
-original_error:
-SyntaxError + invalid requirements formatting
+Original Error:
+SyntaxError: unterminated string literal (line 219)
 
-requirements_changed: true
+Requirements Changed:
+true
+</assistant_response>
+
+### Example – Code Fix (2): ValueError in NumPy reshape
+
+Input:
+<codefix_input id="example-2">
+  <docker_output>
+ValueError: cannot reshape array of size 10 into shape (3,3)
+  </docker_output>
+
+  <code>
+import numpy as np
+arr = np.arange(10)
+reshaped = arr.reshape((3,3))
+  </code>
+
+  <requirements>
+numpy
+  </requirements>
+</codefix_input>
+
+Output:
+<assistant_response id="example-2">
+Fixed Python Code:
+import numpy as np
+arr = np.arange(9)
+reshaped = arr.reshape((3,3))
+
+Requirements (reformatted):
+numpy>=1.21
+
+Fix Description:
+- Reshape to (3,3) requires 9 elements, not 10.
+- Adjusted array size to np.arange(9) to make reshape valid.
+
+Original Error:
+ValueError: cannot reshape array of size 10 into shape (3,3)
+
+Requirements Changed:
+true
+</assistant_response>
+
+### Example – Code Fix (3): ModuleNotFoundError
+
+Input:
+<codefix_input id="example-3">
+  <docker_output>
+ModuleNotFoundError: No module named 'pandasx'
+  </docker_output>
+
+  <code>
+import pandasx as pd
+
+df = pd.read_csv("data.csv")
+print(df.head())
+  </code>
+
+  <requirements>
+pandasx
+  </requirements>
+</codefix_input>
+
+Output:
+<assistant_response id="example-3">
+Fixed Python Code:
+import pandas as pd
+
+df = pd.read_csv("data.csv")
+print(df.head())
+
+Requirements (reformatted):
+pandas>=1.3
+
+Fix Description:
+- Replaced incorrect import 'pandasx' with 'pandas'.
+- Updated requirements to include valid package name.
+
+Original Error:
+ModuleNotFoundError: No module named 'pandasx'
+
+Requirements Changed:
+true
 </assistant_response>
 """
 )

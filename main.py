@@ -47,6 +47,13 @@ def decide_next_step(state: AgentState) -> str:
         return "new_loop"
     return state["proceed"]
 
+def decide_next_step_after_fix(state: AgentState) -> str:
+    if state.get("fixIterations", 0) >= 4:
+        if not state.get("optimizedOnce", False):
+            return decide_problem_analysis(state)
+        return "new_loop"
+    return "continue"  
+
 
 def determine_next_step(state: AgentState) -> str:
     """
@@ -96,7 +103,17 @@ workflow.add_conditional_edges(
         "new_loop": "new_loop",  # Start a new optimization round
     },
 )
-workflow.add_edge("code_fixer", "start_docker")  # Try to execute the fixed code again
+# if code fixer fails many times.. lets go back to start, otherwise continue
+workflow.add_conditional_edges(
+    source="code_fixer",
+    path=decide_next_step_after_fix,
+    path_map={
+        "code_generator": "code_generator",
+        "heuristic": "heuristic",
+        "new_loop": "new_loop", #if fails many times, start new optimization round
+        "continue": "start_docker",  # jatketaan koodin ajoa Dockerissa
+    },
+)
 # workflow.add_edge("start_docker", "output_analyzer")
 workflow.add_conditional_edges(
     source="output_analyzer",

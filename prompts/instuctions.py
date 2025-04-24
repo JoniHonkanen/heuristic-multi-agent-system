@@ -98,56 +98,102 @@ def generate_patterns(widths, max_width):
 
 VRP = {
     "guidelines": """
-General Guidelines for Vehicle Routing Problems (VRP):
+=== General Guidelines for Vehicle Routing Problems (VRP) ===
 
 The Vehicle Routing Problem (VRP) involves determining optimal delivery routes for a fleet of vehicles serving a set of customers, often from a central depot. The objective is typically to minimize total travel distance, cost, or time, while satisfying various constraints such as vehicle capacity.
 
-Problem structure:
+You must use all input data exactly as provided. It is strictly forbidden to alter, restructure, simplify, or replace the input content in any way.
 
-1. Input typically includes:
-   - Customer locations and demands
-   - Distance or time matrix
-   - Vehicle capacity and fleet size
-   - Depot information
+=== Input Structure ===
 
-2. Objective:
-   - Minimize total cost or distance
-   - Serve all customers exactly once
-   - Respect vehicle capacity limits
+Typical VRP input includes:
+- Customer locations and demands
+- Distance or time matrix
+- Vehicle capacity and fleet size
+- Depot location
 
-Recommended heuristics:
+If input is given as a `.vrp` file or structured string, you must parse and use the data exactly as-is.
+Replacing `.vrp` content with mockups, hardcoded strings, or altered versions is strictly forbidden.
 
-- For small/medium-sized problems:
+=== Objective Requirements ===
+
+Your implementation must:
+- Serve each customer exactly once
+- Assign customers to vehicle routes starting and ending at the depot
+- Ensure no vehicle exceeds its capacity
+- Generate a feasible route for each vehicle (if fleet size is fixed)
+- Minimize total distance or cost
+
+You must also clearly state the heuristic used and explain why it is appropriate for the problem.
+
+=== Recommended Heuristics ===
+
+- For small/medium VRPs:
   - Nearest Neighbor
   - Clarke-Wright Savings
   - Sweep Algorithm
 
-- For larger or constrained cases:
+- For larger/more complex cases:
   - Simulated Annealing
   - Tabu Search
   - Genetic Algorithms
+  - Hyperheuristics
   - Google OR-Tools Routing Solver
 
-Avoid:
-- Serving the same customer multiple times unless explicitly allowed
-- Omitting customers
-- Exceeding vehicle capacity limits (weight or volume) in any route
-- Returning raw distance matrices as output instead of structured routes
+=== Forbidden Practices ===
 
-Recommended libraries:
-- `ortools` for solving VRP variants (CVRP, VRPTW, MDVRP)
-- `networkx`, `numpy` for distance matrix and graph handling
-- `pandas`, `openpyxl` for data input/output
-- `matplotlib`, `folium` for optional route visualization
+Never:
+- Serve the same customer multiple times (unless explicitly allowed)
+- Omit any customer
+- Exceed vehicle capacity in any route
+- Return raw distance matrices instead of structured routes
+- Add units (e.g., km, kg) unless explicitly provided in the task
+
+=== Recommended Libraries ===
+
+- `ortools` (e.g., CVRP, VRPTW)
+- `networkx`, `numpy` for graph and matrix handling
+- `pandas`, `openpyxl` for I/O
+- `matplotlib`, `folium` for optional visualization
+
+=== Code Requirements ===
+
+- All functions must be defined before they are used
+- All required imports must be included
+- Code must run in Python 3.9+ without modifications
+- Only include packages actually used in `requirements.txt`
+- Use flexible package versions (`>=x.y`), not exact pins (`==x.y`)
+
+=== Output and Print Requirements ===
+
+Your output must include:
+- Total objective value (e.g., total route distance or cost)
+- A human-readable route summary per vehicle
+- Clear, valid print statements
+
+Never do the following:
+- Use `"text" + number"` — this is strictly forbidden and causes `TypeError`
+- Insert raw newlines (`\n`) inside quoted strings — use escaped `\\n` only
+- Use malformed `.format()` calls or unterminated strings
+
+Correct:
+    print(f"Truck 1 route: {{route1}}")
+    print(f"Total distance: {{total_distance}}")
+
+Incorrect:
+    plan_output += ' {}\n\n'.format(x)  # Broken newline
+    print("Distance: " + 123.4)         # TypeError
+
+All output must be syntactically correct, safely formatted, and clearly convey the final result.
 """,
+
     "example": """
-### Example – Heuristic Code Generation for VRP
+### Example – Multi-vehicle routing using Clarke-Wright (VRPLIB input)
 
 Input:
 <structured_state id="vrp-1">
   <user_summary>Route optimization for 3 trucks delivering to 20 locations</user_summary>
   <problem_type>Vehicle routing</problem_type>
-  <problem_class>vehicle_routing</problem_class>
   <optimization_focus>Total distance minimization</optimization_focus>
   <goal>Generate optimized delivery routes</goal>
   <data>vrp_E-n20-k3.vrp</data>
@@ -158,36 +204,25 @@ Input:
 Output:
 <assistant_response id="vrp-1">
 # Heuristic used: Clarke-Wright Savings Algorithm
+# This heuristic computes "savings" for combining customer pairs into routes,
+# starting from a separate route for each customer.
 
 import pandas as pd
 import networkx as nx
 
-# Load data, compute savings, build route graph...
-# Print route per truck and total cost
+# Load and preprocess VRP data
+# Parse .vrp file and extract depot, customers, capacities, and distance matrix
+
+# Implement Clarke-Wright heuristic
+# Build savings list and merge feasible routes
+
+# Example output
+print(f"Truck 1 route: [0, 3, 5, 8, 0]")
+print(f"Truck 2 route: [0, 2, 7, 9, 0]")
+print(f"Truck 3 route: [0, 4, 6, 1, 0]")
+print(f"Total distance: 134.7")
 </assistant_response>
-
-Input:
-<structured_state id="vrp-2">
-  <user_summary>Distribute packages from a central depot to 50 clients</user_summary>
-  <problem_type>Vehicle routing</problem_type>
-  <problem_class>vehicle_routing</problem_class>
-  <optimization_focus>Minimize total route time</optimization_focus>
-  <goal>Find feasible routes under capacity constraints</goal>
-  <data>clients50.csv</data>
-  <resource_requirements>Truck capacity: 200, Time matrix</resource_requirements>
-  <response_format>Excel</response_format>
-</structured_state>
-
-Output:
-<assistant_response id="vrp-2">
-# Heuristic used: OR-Tools Local Search with Capacity Constraint
-
-from ortools.constraint_solver import routing_enums_pb2
-from ortools.constraint_solver import pywrapcp
-
-# Define data model, build RoutingModel, solve, print/export results...
-</assistant_response>
-""",
+"""
 }
 
 KNAPSACK = {
@@ -306,6 +341,7 @@ Typical input includes:
 - A list of employees
 - A calendar of shifts (e.g., morning, evening, night)
 - Shift coverage requirements per day
+- Rules or formulas for determining required staffing dynamically (e.g., based on number of clients, children, patients)
 - Max/min working hours per employee
 - Max consecutive working days
 - Min rest between shifts (e.g., 11h EU directive)
@@ -338,6 +374,7 @@ Recommended libraries:
     "example": """
 ### Example – Heuristic Code Generation for Shift Scheduling
 
+#### Simple example: Weekly rotation for nurses
 Input:
 <structured_state id="shift-1">
   <user_summary>Create a weekly schedule for 10 nurses</user_summary>
@@ -367,6 +404,7 @@ schedule = []
 # Store schedule, export to Excel
 </assistant_response>
 
+#### Targeted example: Weekend assignments with availability constraints
 Input:
 <structured_state id="shift-2">
   <user_summary>Assign support staff to weekend shifts based on availability</user_summary>
@@ -388,7 +426,159 @@ Output:
 # Track assigned hours per person
 # Export CSV with per-shift assignments
 </assistant_response>
+
+#### Complex real-world case: Daycare center scheduling
+Input:
+<structured_state id="shift-3">
+  <user_summary>Continue staff scheduling for a daycare center with 45 children and multiple child/staff ratios</user_summary>
+  <problem_type>Shift scheduling</problem_type>
+  <problem_class>shift_scheduling</problem_class>
+  <optimization_focus>Coverage, group consistency, and workload balance</optimization_focus>
+  <goal>Extend existing Excel-based schedule with valid weekly assignments</goal>
+  <data>schedule_base.xlsx, child_data.xlsx, staff_profiles.xlsx</data>
+  <resource_requirements>
+  - 3 groups: Västäräkki, Peippola, Kiuru
+  - 45 children total (15 under 3, 25 over 3, 5 mixed age)
+  - Staff ratio: 1:4 (under 3), 1:7 (over 3), 1:1.75 (mixed), adjusted for special needs
+  - Each staff has shift availability, group assignment, role, weekly target (38h 15min)
+  - Shifts must respect holidays, avoid overlapping, and stay within hour limits
+  </resource_requirements>
+  <response_format>Excel file in same format as 'tyovuoro_esimerkki.xlsx' with assigned staff names per shift</response_format>
+</structured_state>
+
+Output:
+<assistant_response id="shift-3">
+# Heuristic used: Group-based demand estimation + constrained greedy assignment with load balancing
+
+import pandas as pd
+
+# Load data
+schedule_template = pd.read_excel("schedule_base.xlsx")
+child_data = pd.read_excel("child_data.xlsx")
+staff_profiles = pd.read_excel("staff_profiles.xlsx")
+
+# Step 1: Compute required staff per group per time slot based on attendance and adjusted ratios
+# Step 2: For each shift slot:
+#   - Select available staff from the correct group
+#   - Ensure total hours and week limits are not exceeded
+#   - Respect vacations and group assignment
+# Step 3: Prioritize continuity and workload balance
+# Step 4: Assign names to schedule cells, mark "loma" where needed
+
+# Output schedule saved as Excel matching original template format ('tyovuoro_esimerkki.xlsx')
+
+# Example (week 18, simplified preview):
+
+| Week | Mon 6:30–14:30 | Mon 7:00–15:00 | Tue 6:30–14:30 | Tue 7:00–15:00 | ... |
+|------|----------------|----------------|----------------|----------------|-----|
+| 18   | Aalto, Tiina   | Korhonen, Liisa| Aalto          | Virtanen, Mika | ... |
+| 19   | ...            | ...            | ...            | ...            |     |
+
+# Final schedule exported to Excel as instructed.
+</assistant_response>
 """,
+}
+
+WAREHOUSE_OPTIMIZATION = {
+"guidelines": """
+General Guidelines for Warehouse Optimization Problems:
+
+Warehouse optimization problems typically involve routing mobile agents (e.g., robots, workers) to pick up and deliver items between storage locations and designated areas, while minimizing total movement, time, or energy. Problems may also include optimizing the placement of goods to reduce future travel.
+
+Typical input includes:
+- A list of items with pickup and dropoff points
+- A warehouse map represented as a grid or graph (e.g., aisles, shelves)
+- Robot or agent profiles (e.g., capacity, speed, start location)
+- Time windows or priority levels for some items
+- Constraints like collision avoidance or one-way paths
+
+Objectives:
+- Minimize total distance or time used by robots
+- Maximize throughput (items delivered per hour)
+- Minimize idle time or energy consumption
+- Balance task load among multiple robots
+
+Constraints:
+- No collisions or overlapping paths
+- Maximum capacity per robot (e.g., 1–5 items per trip)
+- Allowed directions in narrow aisles
+- Limited shift duration or battery time
+- Item priorities or dependencies (e.g., item A before B)
+
+Recommended approaches:
+- A* or Dijkstra for shortest pathfinding on warehouse graphs
+- Multi-agent pathfinding (MAPF) for simultaneous routing
+- Simulated Annealing or Genetic Algorithms for slot assignment or task sequencing
+- Integer or Constraint Programming (e.g., with OR-Tools) for small-scale exact formulations
+- Hybrid greedy + local search for fast approximations
+
+Avoid:
+- Treating robots as independent if collision constraints apply
+- Ignoring start/end positions when optimizing sequence
+- Overfitting to fixed item layouts
+- Hard-coding shelf positions instead of using a flexible data structure
+
+Recommended libraries:
+- `networkx` or `scipy.sparse.csgraph` for graph-based routing
+- `numpy`, `pandas` for data handling
+- `ortools` for constraint and routing solvers
+- `heapq`, `collections`, `matplotlib` for task queues and visualization
+""",
+"example": """
+### Example – Heuristic Code Generation for Warehouse Routing
+
+Input:
+<structured_state id="warehouse-1">
+  <user_summary>Minimize the movement of robots while delivering 10 items from entrance to shelf and from shelf to outbound dock</user_summary>
+  <problem_type>Warehouse optimization</problem_type>
+  <problem_class>warehouse_optimization</problem_class>
+  <optimization_focus>Total distance traveled</optimization_focus>
+  <goal>Move all items to their destination shelves with minimum motion</goal>
+  <data>warehouse_map.json, items.csv</data>
+  <resource_requirements>
+  - Grid-based warehouse with shelves as nodes
+  - 3 robots, each can carry 1 item at a time
+  - Start location is (0, 0); outbound dock at (9, 9)
+  - Items have storage targets like (2,3), (4,7), etc.
+  </resource_requirements>
+  <response_format>Python code that prints each robot's path and total cost</response_format>
+</structured_state>
+
+Output:
+<assistant_response id="warehouse-1">
+# Heuristic used: Task assignment + A* routing for each robot sequentially
+
+import json, heapq
+import networkx as nx
+import pandas as pd
+
+# Load warehouse layout
+with open("warehouse_map.json") as f:
+    warehouse = nx.node_link_graph(json.load(f))
+
+items = pd.read_csv("items.csv")
+robots = [{"id": i, "position": (0, 0), "path": [], "cost": 0} for i in range(3)]
+
+# Assign each item to the robot with the lowest current load
+for i, row in items.iterrows():
+    dest = tuple(map(int, row["target"].split(",")))
+    best_robot = min(robots, key=lambda r: r["cost"])
+    path = nx.shortest_path(warehouse, source=best_robot["position"], target=dest, weight="weight")
+    best_robot["path"] += path + [dest]
+    best_robot["cost"] += nx.path_weight(warehouse, path, weight="weight")
+    best_robot["position"] = dest
+
+# Move to dock after deliveries
+for robot in robots:
+    path = nx.shortest_path(warehouse, source=robot["position"], target=(9, 9), weight="weight")
+    robot["path"] += path
+    robot["cost"] += nx.path_weight(warehouse, path, weight="weight")
+
+# Print result
+for r in robots:
+    print(f"Robot {r['id']}: Path = {r['path']}, Cost = {r['cost']}")
+</assistant_response>
+"""
 }
 
 OTHER = {

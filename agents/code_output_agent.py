@@ -70,20 +70,16 @@ async def code_output_analyzer_agent(state: AgentState):
     res = await cl.AskActionMessage(
         content="Let's begin a new optimization round?",
         actions=[
-            cl.Action(
-                name="continue",
-                payload={"value": "continue"},
-                label="✅ Yes, let's continue",
-            ),
-            cl.Action(
-                name="done",
-                payload={"value": "done"},
-                label="❌ This is enough for now",
-            ),
+            cl.Action(name="continue", payload={"value": "continue"}, label="✅ Yes, let's continue"),
+            cl.Action(name="done", payload={"value": "done"}, label="❌ This is enough for now"),
         ],
     ).send()
-
-    # Handle the user's response
+    
+    if res is None or "payload" not in res or "value" not in res["payload"]:
+        await cl.Message(content="No valid response received. Ending session.").send()
+        state["proceed"] = "done"
+        return state
+    
     selected_value = res["payload"]["value"]
 
     if selected_value == "continue":

@@ -1,10 +1,11 @@
 from .common import cl, PydanticOutputParser, llm_code, llm_code_claude
-from schemas import AgentState, Code, SolutionMethod
+from schemas import AgentState, Code, SolutionMethod, ProblemClass
 from prompts.prompts import (
     NEW_LOOP_CODE_PROMPT,
     NEW_LOOP_CODE_PROMPT_NO_DATA,
     NEW_LOOP_HEURISTIC_PROMPT,
 )
+from prompts.instuctions import *
 
 
 async def new_loop_logic(state: AgentState) -> Code:
@@ -15,9 +16,24 @@ async def new_loop_logic(state: AgentState) -> Code:
     state["fixIterations"] = 0
     state["optimizedOnce"] = True
 
+    problem_type = inputs.problem_class
+
+    problem_guidance_map = {
+        ProblemClass.CUTTING_STOCK: CUTTING_STOCK,
+        ProblemClass.VRP: VRP,
+        ProblemClass.KNAPSACK: KNAPSACK,
+        ProblemClass.SHIFT_SCHEDULING: SHIFT_SCHEDULING,
+        ProblemClass.WAREHOUSE_OPTIMIZATION: WAREHOUSE_OPTIMIZATION,
+        ProblemClass.OTHER: OTHER,
+    }
+
+    def get_guidance(problem_type: ProblemClass) -> dict:
+        return problem_guidance_map.get(problem_type, OTHER)
+
+    guidance = get_guidance(problem_type)
+
     # Select the appropriate prompt based on the solution method
     if state["solution_method"] == SolutionMethod.HEURISTIC:
-        print("!!!!!Using heuristic prompt!!!!!!")
         prompt = NEW_LOOP_HEURISTIC_PROMPT.format(
             user_summary=inputs.user_summary,
             goal=inputs.goal,
@@ -27,7 +43,9 @@ async def new_loop_logic(state: AgentState) -> Code:
             previous_results=last_output.answer_description,
             previous_code=last_code.python_code,
             resource_requirements=inputs.resource_requirements,
-            response_format=inputs.response_format
+            response_format=inputs.response_format,
+            problem_specific_guidelines=guidance["guidelines"],
+            problem_specific_example=guidance["example"],
         )
     else:
         if state["promptFiles"] == "":
