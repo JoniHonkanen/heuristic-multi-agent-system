@@ -342,7 +342,6 @@ Always include print statements that display essential outputs. This includes th
 Before returning the final code, confirm that:
 - All strings are well-formed (no unterminated strings)
 - All `.format()` calls use correct arguments and are not broken across lines
-- All newlines in strings are escaped (`\\n`) and not literal line breaks
 - All control structures (if, for, while) are properly closed and correctly indented
 - No `TypeError` occurs from improper print or string concatenation
 
@@ -665,13 +664,12 @@ You are continuing an optimization process. Your next solution must **strictly i
   - Or replace it with a **fundamentally different heuristic framework**.
 - Generating two iterations with essentially the **same algorithm and logic is considered invalid**.
 
-### Step 2: Heuristic Selection Strategy
-- Do **not** chain multiple metaheuristics blindly (e.g., NN → SA → Tabu → GA → ACO).
+### Step 2a: Heuristic Selection Strategy
+- Do **not** chain multiple metaheuristics blindly (e.g., NN → SA → Tabu → ACO).
 - **Only apply one advanced heuristic or metaheuristic at a time**.
 - Decide whether to:
   - Keep refining the current heuristic,
   - Replace it with a different one,
-  - Or switch to a more global optimization approach (e.g., GA, ACO).
 - **Avoid overfitting or redundant computation** by skipping heuristics that add no improvement.
 - Document clearly **why the chosen heuristic was applied**, and **why others were not**.
 
@@ -679,6 +677,8 @@ You are continuing an optimization process. Your next solution must **strictly i
 - You must clearly justify how the new approach is expected to **outperform** the last one.
 - If the new solution **does not improve** the objective value, it must be considered a failure, and another method should be attempted.
 
+### Step 2b: Problem-Specific Guidelines
+You must now apply problem-specific constraints and rules based on the type of optimization problem.
 {problem_specific_guidelines}
 
 ### Step 3: Validate and Compare the Improvement
@@ -692,14 +692,11 @@ If the new solution does not **strictly outperform the previous result**, it mus
 - If the previous method was too simple, try **metaheuristics** or multi-phase strategies.
 
 ### Step 4: Output the Best Heuristic Solution
-At the top of the code output, include a short comment identifying the heuristic used, e.g.: Heuristic used: Genetic Algorithm with capacity-aware route splitting
+At the top of the code output, include a short comment identifying the heuristic used
 Your response must include the following structured output:
 
 - **python_code**: The Python code implementing the improved heuristic.
 - **requirements**: List of Python dependencies (e.g. numpy, networkx).
-- **performance_comparison**: Explanation of how this version is better than the last.
-- **objective_value**: A numeric comparison of the old and new solution (e.g. "previous: 524.7 → new: 512.3").
-- **test_cases**: Describe the test cases used to verify the improvement.
 
 ### Step 5: Handle Numerical Precision
 - All distance and cost calculations must retain full floating-point precision.
@@ -722,16 +719,8 @@ scipy>=1.7
 ortools>=9.2
 openpyxl>=3.0
 
-### Step 7: Print Results for Validation
-- Your generated Python code must include output that prints the resulting solution in a human-readable format.
-- This applies **even if the result is also written to a file (e.g., Excel)**.
-- At minimum, print:
-  - The **total objective value** (e.g., total route distance, total cost, or fitness).
-  - A **summary of the solution** (e.g., routes per vehicle, selected actions, or other domain-specific output).
-- This output is required to facilitate quick visual inspection, debugging, and testing of the solution.
-- Avoid silent or implicit results — make the outcome observable directly via `print()` statements.
 
----
+### Step 7: Understand the Task Context
 
 **Original user input:**  
 {user_summary}
@@ -761,8 +750,18 @@ openpyxl>=3.0
 {response_format}
 
 ---
+### Step 8: Understanding the example
 
 {problem_specific_example}
+
+### Step 9: Print Results for Validation
+- Your generated Python code must include output that prints the resulting solution in a human-readable format.
+- This applies **even if the result is also written to a file (e.g., Excel)**.
+- At minimum, print:
+  - The **total objective value** (e.g., total route distance, total cost, or fitness).
+  - A **summary of the solution** (e.g., routes per vehicle, selected actions, or other domain-specific output).
+- This output is required to facilitate quick visual inspection, debugging, and testing of the solution.
+- Avoid silent or implicit results — make the outcome observable directly via `print()` statements.
     """
 )
 

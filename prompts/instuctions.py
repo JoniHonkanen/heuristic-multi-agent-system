@@ -112,6 +112,10 @@ Typical VRP input includes:
 - Vehicle capacity and fleet size
 - Depot location
 
+**Understand whether the problem requires a single vehicle or multiple vehicles.**
+- If `fleet size = 1`, the problem reduces to a **Traveling Salesman Problem (TSP)**.
+- If `fleet size > 1`, treat it as a standard **CVRP or VRPTW** instance.
+
 If input is given as a `.vrp` file or structured string, you must parse and use the data exactly as-is.
 Replacing `.vrp` content with mockups, hardcoded strings, or altered versions is strictly forbidden.
 
@@ -141,6 +145,7 @@ You must also clearly state the heuristic used and explain why it is appropriate
   - Google OR-Tools Routing Solver
 
 === Forbidden Practices ===
+- Use crossover operators suitable for list-of-routes structures (VRP). Operators like `cxOrdered` assume equal-length, flat permutations and may fail with VRP-specific data.
 
 Never:
 - Serve the same customer multiple times (unless explicitly allowed)
@@ -163,6 +168,9 @@ Never:
 - Code must run in Python 3.9+ without modifications
 - Only include packages actually used in `requirements.txt`
 - Use flexible package versions (`>=x.y`), not exact pins (`==x.y`)
+- Do not remove depot information from coordinates or demands. The depot must remain as index 0 in both lists.
+- Ensure that the number of locations, demands, and routing manager indices match exactly. Misaligned data will prevent solution feasibility.
+- If you use Google OR-Tools, always set a time limit (e.g., `search_parameters.time_limit.FromSeconds(30)`) to avoid infinite solving attempts if no solution is found.
 
 === Output and Print Requirements ===
 
@@ -172,9 +180,10 @@ Your output must include:
 - Clear, valid print statements
 
 Never do the following:
-- Use `"text" + number"` — this is strictly forbidden and causes `TypeError`
-- Insert raw newlines (`\n`) inside quoted strings — use escaped `\\n` only
-- Use malformed `.format()` calls or unterminated strings
+    - **Do NOT place `\n` inside a `.format()` placeholder or split it across lines .**
+    - If a newline is needed, **use f-strings or concatenate explicitly (`+ "\\n"`) instead**.
+    - Ensure that all `.format()` calls receive the correct number of arguments to prevent tuple index errors.
+    - Verify that all string formatting operations (e.g., `.format()`, f-strings) correctly reference valid variables.
 
 Correct:
     print(f"Truck 1 route: {{route1}}")
@@ -188,7 +197,7 @@ All output must be syntactically correct, safely formatted, and clearly convey t
 """,
 
     "example": """
-### Example – Multi-vehicle routing using Clarke-Wright (VRPLIB input)
+### Example – Multi-vehicle routing (CVRP)
 
 Input:
 <structured_state id="vrp-1">
@@ -221,6 +230,29 @@ print(f"Truck 1 route: [0, 3, 5, 8, 0]")
 print(f"Truck 2 route: [0, 2, 7, 9, 0]")
 print(f"Truck 3 route: [0, 4, 6, 1, 0]")
 print(f"Total distance: 134.7")
+</assistant_response>
+
+### Example – Single-vehicle (TSP)
+
+Input:
+<structured_state id="vrp-tsp">
+  <user_summary>Find shortest round trip for 1 truck visiting 15 customers</user_summary>
+  <problem_type>Vehicle routing</problem_type>
+  <optimization_focus>Minimize route length</optimization_focus>
+  <goal>Generate a TSP tour visiting all points once</goal>
+  <data>tsp_15_customers.vrp</data>
+  <resource_requirements>Single truck; no capacity constraints</resource_requirements>
+  <response_format>List of visited nodes + total cost</response_format>
+</structured_state>
+
+Output:
+<assistant_response id="vrp-tsp">
+# Heuristic used: 2-opt local search for TSP
+
+# Parse TSP data and compute initial route
+# Apply 2-opt swaps until no improvement
+print(f"Route: [0, 3, 7, 12, ..., 0]")
+print(f"Total distance: 378.2")
 </assistant_response>
 """
 }
