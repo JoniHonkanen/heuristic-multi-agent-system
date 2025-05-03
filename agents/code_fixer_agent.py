@@ -57,6 +57,7 @@ async def code_fixer_agent(state: AgentState):
     current_step.input = (
         "Fixing the code based on the error encountered during execution."
     )
+    print("Fixing step input:", docker_output)
 
     try:
         # Call the core logic function

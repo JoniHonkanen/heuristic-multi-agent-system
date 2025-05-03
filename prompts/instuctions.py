@@ -1,51 +1,95 @@
 CUTTING_STOCK = {
     "guidelines": """
-General Guidelines for Cutting Stock Problems:
+=== General Guidelines for Cutting Stock Problems ===
 
-The cutting stock problem involves cutting large stock material (such as paper rolls or steel sheets) into smaller widths to fulfill customer orders, while minimizing material waste and the number of stock rolls used.
+The Cutting Stock Problem (CSP) involves cutting large stock materials (e.g., paper rolls, steel plates) into smaller required widths, such that customer demand is fulfilled with minimal waste and minimal number of rolls used.
 
-Key principles:
+=== Input Structure ===
 
-- Each cutting pattern defines how a single stock item (e.g., one 100-inch roll) is cut into a combination of required widths.
-- The objective is to determine which patterns to use and how many times to apply each pattern so that demand for each width is fulfilled exactly.
-- This is a variant of the one-dimensional bin packing problem with demand constraints.
+You are given:
+- A single stock item type: a roll with fixed width (e.g., 100 inches) and unlimited length.
+- A list of required widths and their corresponding demand quantities.
+- The objective is to design valid cutting patterns and determine how many times each pattern should be applied.
 
-Solution structure:
+Inputs are typically:
+- Excel or CSV files listing widths and demands.
+- Each cutting pattern must not exceed the maximum stock width (e.g., 100 inches).
+- All demands must be fulfilled exactly (no underproduction or overproduction is allowed).
 
-1. Pattern Generation:
-   - Generate a set of feasible cutting patterns, where the sum of widths in each pattern does not exceed the total stock width (e.g., 100 inches).
-   - Use constructive heuristics such as First-Fit Decreasing (FFD), Best-Fit Decreasing (BFD), or full enumeration with filtering.
+=== Output Requirements ===
 
-2. Pattern Selection:
-   - Determine how many times to use each pattern in order to meet all demands.
-   - This can be done via linear or integer programming (e.g., using the 'pulp' or 'ortools' library), or with greedy or metaheuristic-based selection.
-   - Metaheuristics such as Genetic Algorithms or Simulated Annealing may be used to improve efficiency in large instances.
+You must output:
+- A list of cutting patterns used (each as a tuple of widths)
+- How many times each pattern is applied
+- Total number of rolls used (equals the sum of pattern usages)
+- Total material waste
+- A verification table with:
+    - Required demand per width
+    - Produced amount from patterns
+    - Surplus/deficit (must be zero for a valid solution)
 
-The output must include:
-- A list of all cutting patterns used
-- The number of times each pattern is applied
-- The total number of stock rolls used
-- Optionally, the total material waste
+Any solution that does not meet demand exactly is considered invalid.
 
-Avoid the following:
-- Assigning rolls per width individually. That does not reflect the nature of the problem.
-- Overproducing or underproducing any width
-- Using patterns that exceed the stock width limit
+=== Demand Verification (Required Step) ===
 
-Recommended libraries:
-- pandas, openpyxl: for Excel I/O
-- pulp, ortools: for optimization
-- collections, numpy: for data handling and pattern construction
+After solving, construct a table comparing produced vs. required demand. You must verify that:
+- No demand is left unmet (no underproduction)
+- No excess units are produced (no overproduction)
+
+Example:
+Width | Required | Produced | Surplus/Deficit  
+----- | -------- | -------- | ----------------  
+36    | 610      | 610      | 0  
+
+=== Heuristic and Optimization Methods ===
+
+Pattern generation must use:
+- First-Fit Decreasing (FFD)
+- Best-Fit Decreasing (BFD)
+- Combinations with replacement (filtered by max roll width)
+
+Pattern selection must use:
+- Integer Linear Programming (ILP) via `pulp` or `ortools`
+- Metaheuristics (e.g., GA) only if demand match is strictly validated
+
+=== Forbidden Practices ===
+
+Never:
+- Assign each width to its own roll
+- Generate patterns that exceed roll width
+- Omit post-solution validation
+- Return solutions with surplus or missing units
+
+=== Recommended Libraries ===
+
+- `pandas`, `openpyxl`: Excel/CSV I/O
+- `pulp`, `ortools`: ILP modeling
+- `collections`, `numpy`: pattern enumeration
+
+=== Code Format and Execution ===
+
+- Define all functions before use
+- Use only required libraries
+- Format all output clearly with print statements
+- Ensure results are reproducible in Python 3.9+
+
+=== Summary ===
+
+Your solution must:
+- Minimize the number of rolls used
+- Minimize total material waste
+- Match customer demand exactly
+- Output all results and verification
 """,
     "example": """
 ### Example – Heuristic Code Generation for Cutting Stock
 
 Input:
 <structured_state id="cutting-stock-1">
-  <user_summary>Minimize the number of 100-inch rolls used to fulfill width demands</user_summary>
+  <user_summary>You have an unlimited-length roll with a fixed width of 100 inches. Minimize the number of rolls used to fulfill the specified width demands.</user_summary>
   <problem_type>Cutting stock</problem_type>
   <optimization_focus>Waste minimization</optimization_focus>
-  <goal>Generate cutting patterns and select quantities</goal>
+  <goal>Generate valid cutting patterns that fulfill each demand exactly without overproduction.</goal>
   <data>cutting_orders.xlsx</data>
   <resource_requirements>Widths: 45, 36, 31, 14; Demands: 97, 610, 395, 211</resource_requirements>
   <response_format>Excel</response_format>
@@ -53,48 +97,59 @@ Input:
 
 Output:
 <assistant_response id="cutting-stock-1">
-# Heuristic used: FFD pattern generation with greedy selection
+# Heuristic used: FFD pattern generation + ILP for pattern selection
 
 from itertools import combinations_with_replacement
+from pulp import LpProblem, LpMinimize, LpVariable, lpSum, LpInteger
+import pandas as pd
 
+# Load data
 widths = [45, 36, 31, 14]
+demands = [97, 610, 395, 211]
 roll_width = 100
-patterns = []
 
-for r in range(1, 5):
+# Generate feasible patterns
+patterns = []
+for r in range(1, 6):
     for combo in combinations_with_replacement(widths, r):
         if sum(combo) <= roll_width:
-            patterns.append(combo)
+            patterns.append(tuple(sorted(combo)))
 
+patterns = list(set(patterns))
+
+# Create LP problem
+prob = LpProblem("CuttingStock", LpMinimize)
+vars = LpVariable.dicts("P", range(len(patterns)), 0, None, LpInteger)
+prob += lpSum([vars[i] for i in range(len(patterns))]), "Minimize Rolls"
+
+# Add demand constraints
+for j, w in enumerate(widths):
+    prob += lpSum([vars[i] * pattern.count(w) for i, pattern in enumerate(patterns)]) == demands[j]
+
+prob.solve()
+
+# Print results
+print("Cutting Patterns Used:")
+for i, count in vars.items():
+    if count.varValue > 0:
+        print(f"Pattern {patterns[i]} used {int(count.varValue)} times")
+
+total_rolls = sum(count.varValue for count in vars.values())
+total_waste = sum((roll_width - sum(patterns[i])) * vars[i].varValue for i in vars if vars[i].varValue > 0)
+
+print(f"Total rolls used: {int(total_rolls)}")
+print(f"Total material waste: {int(total_waste)} inches")
+
+# Verification
+print("\\nVerification Table:")
+print("Width | Required | Produced | Surplus/Deficit")
+for j, w in enumerate(widths):
+    produced = sum([vars[i].varValue * patterns[i].count(w) for i in vars])
+    print(f"{w} | {demands[j]} | {int(produced)} | {int(produced - demands[j])}")
 </assistant_response>
-
-Input:
-<structured_state id="cutting-stock-2">
-  <user_summary>Cut metal sheets efficiently using predefined widths</user_summary>
-  <problem_type>Cutting stock</problem_type>
-  <optimization_focus>Minimize number of rolls used</optimization_focus>
-  <goal>Construct valid patterns for ILP solver</goal>
-  <data>orders.csv</data>
-  <resource_requirements>Widths and demands</resource_requirements>
-  <response_format>CSV</response_format>
-</structured_state>
-
-Output:
-<assistant_response id="cutting-stock-2">
-# Heuristic used: Pattern generator for linear programming
-
-def generate_patterns(widths, max_width):
-    from itertools import combinations_with_replacement
-    patterns = []
-    for r in range(1, 5):
-        for combo in combinations_with_replacement(widths, r):
-            if sum(combo) <= max_width:
-                patterns.append(sorted(combo))
-    return list(set(map(tuple, patterns)))
-
-</assistant_response>
-""",
+"""
 }
+
 
 VRP = {
     "guidelines": """
@@ -119,6 +174,17 @@ Typical VRP input includes:
 If input is given as a `.vrp` file or structured string, you must parse and use the data exactly as-is.
 Replacing `.vrp` content with mockups, hardcoded strings, or altered versions is strictly forbidden.
 
+If the input specifies `EDGE_WEIGHT_TYPE : EUC_2D`, you must compute all pairwise distances using the TSPLIB standard formula:
+`int(sqrt((x1 - x2)^2 + (y1 - y2)^2) + 0.5)`. This rounding is part of the problem definition and must not be skipped.
+
+**Important: Depot must not be added manually**
+If the `.vrp` input already includes the depot node (e.g., `1 30 40` in `NODE_COORD_SECTION` and `1 0` in `DEMAND_SECTION`), you **must not insert the depot again** into the coordinates or demands list manually.
+
+- Always preserve the original index alignment from the `.vrp` file:
+  - `coordinates[i]` must correspond exactly to `demands[i]`
+  - The depot is typically at index 0 — do not modify unless it is explicitly absent
+- Inserting a depot manually with `coordinates.insert(0, ...)` or similar will break indexing and lead to silent logic errors, such as zero-valued route distances.
+
 === Objective Requirements ===
 
 Your implementation must:
@@ -128,7 +194,7 @@ Your implementation must:
 - Generate a feasible route for each vehicle (if fleet size is fixed)
 - Minimize total distance or cost
 
-You must also clearly state the heuristic used and explain why it is appropriate for the problem.
+Clearly state the heuristic used and briefly explain its suitability.
 
 === Recommended Heuristics ===
 
@@ -146,6 +212,7 @@ You must also clearly state the heuristic used and explain why it is appropriate
 
 === Forbidden Practices ===
 - Use crossover operators suitable for list-of-routes structures (VRP). Operators like `cxOrdered` assume equal-length, flat permutations and may fail with VRP-specific data.
+- Do not manually insert or reinsert the depot into coordinates or demands if it is already present in the input. This will misalign index references and silently corrupt distance or capacity calculations.
 
 Never:
 - Serve the same customer multiple times (unless explicitly allowed)
@@ -171,6 +238,11 @@ Never:
 - Do not remove depot information from coordinates or demands. The depot must remain as index 0 in both lists.
 - Ensure that the number of locations, demands, and routing manager indices match exactly. Misaligned data will prevent solution feasibility.
 - If you use Google OR-Tools, always set a time limit (e.g., `search_parameters.time_limit.FromSeconds(30)`) to avoid infinite solving attempts if no solution is found.
+  - The time limit should scale with the problem complexity — use 120 to 300 seconds for more demanding cases.
+- If using OR-Tools with `GetArcCostForVehicle(...)`, ensure that:
+  - A valid distance callback has been registered using `SetArcCostEvaluatorOfAllVehicles(...)`
+  - If this is missing or incorrectly set, arc costs will be silently zero
+  - You do **not** need `AddDimension(...)` unless modeling cumulative metrics (e.g. time, max distance, windows)
 
 === Output and Print Requirements ===
 

@@ -699,8 +699,10 @@ Your response must include the following structured output:
 - **requirements**: List of Python dependencies (e.g. numpy, networkx).
 
 ### Step 5: Handle Numerical Precision
-- All distance and cost calculations must retain full floating-point precision.
-- Do **not** round, truncate, or cast floats to integers unless **explicitly required** by the problem.
+- Distance and cost calculations must preserve full floating-point precision by default.
+- However, if the problem definition explicitly specifies a discretized metric (e.g., EUC_2D in TSPLIB), you **must use** the rounding method defined by that metric.
+  - For example, EUC_2D distances must be computed as `int(sqrt((x1 - x2)^2 + (y1 - y2)^2) + 0.5)`.
+- Do **not** apply arbitrary rounding unless it is explicitly required by the problem specification.
 - Avoid using `astype(int)`, `int()`, `round()` or similar unless justified.
 - Preserving precision ensures that all comparisons between solutions are accurate and not distorted by rounding artifacts.
 
@@ -762,6 +764,16 @@ openpyxl>=3.0
   - A **summary of the solution** (e.g., routes per vehicle, selected actions, or other domain-specific output).
 - This output is required to facilitate quick visual inspection, debugging, and testing of the solution.
 - Avoid silent or implicit results — make the outcome observable directly via `print()` statements.
+
+### Step 10: Code Correctness and Executability
+Before finalizing your response, verify that the generated code is:
+- Fully executable in Python 3.9+ without syntax or runtime errors
+- Functionally correct (i.e., it produces a result consistent with the optimization goal)
+- Free of logic bugs, broken loops, undefined variables, or uninitialized structures
+- Using correct and aligned data structures (e.g., distance matrices, capacity constraints)
+
+You must simulate the code execution in your reasoning to ensure it behaves as intended.  
+Producing non-executable or incorrect code will invalidate the response.
     """
 )
 

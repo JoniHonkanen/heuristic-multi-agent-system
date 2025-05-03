@@ -81,10 +81,16 @@ async def start_docker_container_agent(state: AgentState):
         if up_process.returncode is not None and up_process.returncode != 0:
             raise Exception("Docker container execution failed")
 
+        # pyritään ratkaisemaan payload liian pitkä -ongelma: otetaan viimeiset 100 riviä ja rajataan ne enintään 4000 merkkiin
+        MAX_OUTPUT_CHARS = 4000
         last_100_lines = "\n".join(full_output.strip().splitlines()[-100:])
-        state["docker_output"] = last_100_lines
+        trimmed_output = last_100_lines[-MAX_OUTPUT_CHARS:]
+        
+        print("TRIMMED OUTPUT:")
+        print(trimmed_output)
+        state["docker_output"] = trimmed_output
         state["proceed"] = "continue"
-        current_step.output = last_100_lines 
+        current_step.output = trimmed_output 
 
     except Exception as e:
         print(f"An error occurred: {e}")
