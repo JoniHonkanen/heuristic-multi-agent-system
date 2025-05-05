@@ -147,7 +147,7 @@ for j, w in enumerate(widths):
     produced = sum([vars[i].varValue * patterns[i].count(w) for i in vars])
     print(f"{w} | {demands[j]} | {int(produced)} | {int(produced - demands[j])}")
 </assistant_response>
-"""
+""",
 }
 
 
@@ -267,7 +267,6 @@ Incorrect:
 
 All output must be syntactically correct, safely formatted, and clearly convey the final result.
 """,
-
     "example": """
 ### Example – Multi-vehicle routing (CVRP)
 
@@ -326,7 +325,7 @@ Output:
 print(f"Route: [0, 3, 7, 12, ..., 0]")
 print(f"Total distance: 378.2")
 </assistant_response>
-"""
+""",
 }
 
 KNAPSACK = {
@@ -436,155 +435,142 @@ Output:
 }
 
 SHIFT_SCHEDULING = {
-    "guidelines": """
-General Guidelines for Shift Scheduling Problems:
+  "guidelines": """
+=== General Guidelines for Shift Scheduling Problems ===
 
-The shift scheduling problem consists of assigning personnel to shifts over a planning horizon (e.g., a week or month), while satisfying a range of hard and soft constraints and optimizing objectives such as coverage, fairness, and preferences.
+You are solving a real-world shift scheduling problem. Your task is to extend an existing schedule by generating valid staff assignments for a specified horizon (e.g., next 8 weeks) without altering any past data. All decisions must respect given inputs and constraints.
 
-Typical input includes:
-- A list of employees
-- A calendar of shifts (e.g., morning, evening, night)
-- Shift coverage requirements per day
-- Rules or formulas for determining required staffing dynamically (e.g., based on number of clients, children, patients)
-- Max/min working hours per employee
-- Max consecutive working days
-- Min rest between shifts (e.g., 11h EU directive)
-- Employee qualifications or role constraints
-- Preference scores, availability, or time-off requests
+=== Input Specification ===
+Inputs may include:
+- Staff profiles: names, roles, assigned groups/units, weekly hour limits, availability, vacations
+- Shift definitions: labels, time ranges, durations, days of week
+- Demand data: required headcount per shift (static or varying by time)
+- Existing schedule/template (e.g., Excel file)
+- Holidays and non-working days
+- Optional dynamic parameters (e.g., attendance, special weighting factors)
 
-Objectives:
-- Cover all required shifts
-- Minimize constraint violations (e.g., rest time, max hours)
-- Balance workload fairly
-- Honor employee preferences as much as possible
+Always use the provided data exactly as-is. Do not invent, infer, or hardcode placeholder values. Read child attendance and staff profile data directly from the input files; do not use dummy counts or arbitrary defaults.
 
-Recommended approaches:
-- Greedy construction with repair phase
-- Local Search, Simulated Annealing, Tabu Search
-- Integer Programming via `pulp` or `ortools` for small/medium instances
-- Rule-based heuristics combined with preference scoring
+=== Hard Constraints ===
+Your schedule must satisfy every constraint:
+1. **One entry per cell:** Exactly one of: a staff name, "loma", "avustaja", or empty (if allowed). No lists or composites.
+2. **No overlap:** No employee on two overlapping shifts in the same day.
+3. **Minimum rest:** At least 11 hours between shift end and next start.
+4. **Weekly hours:** Do not exceed each employee’s weekly limit (e.g., 38h15m).
+5. **Availability:** Respect vacations, leaves, and other unavailability.
+6. **Grouping:** Assign staff only to their own group/unit.
+7. **Coverage:** Fill all required shifts unless explicitly waived.
+8. **Holidays:** Do not assign on listed holidays unless allowed.
 
-Avoid:
-- Assigning overlapping shifts to one employee
-- Exceeding allowed working hours or violating minimum rest
-- Leaving critical shifts uncovered
-- Ignoring employee unavailability or time-off requests
+=== Time Parsing Rules ===
+When parsing shift times (e.g., "6.30-14.30", "(7.00) 7.30"), do not cast to float. Clean strings with regex (remove parentheses/whitespace), then parse via `datetime.strptime` supporting ":" or "." separators.
 
-Recommended libraries:
-- `pandas`, `numpy` for data handling
-- `ortools.sat.python.cp_model` for constraint-based solvers
-- `random`, `datetime`, `calendar` for custom rule-based heuristics
-""",
-    "example": """
-### Example – Heuristic Code Generation for Shift Scheduling
+=== Schedule Continuation Rules ===
+- **Never overwrite** existing rows or cells. Save to a new file (e.g., `updated_...xlsx`).
+- **Start at the first empty row** after the highest week number (column A).
+- **Detect the highest week number** and begin new weeks at last + 1, generating exactly the requested number of weeks.
+- **Append** new rows; do not modify historical data.
+- **Output file** must contain only newly generated weeks; do not include or reproduce past weeks.
 
-#### Simple example: Weekly rotation for nurses
+=== Output Requirements ===
+- Use `openpyxl` for Excel I/O; preserve all formatting, headers, styles, formulas.
+- Write each assignment via `ws.cell(row, col).value = ...`.
+- Follow the template’s row/column structure exactly.
+
+=== Recommended Scheduling Logic ===
+Decisions must be data-driven:
+1. **Compute staffing demand per shift dynamically:** for each time slot, sum children present (applying special needs multipliers) by group, then apply group-specific staffing ratios (e.g., 1:4 under‑3, 1:7 over‑3, 1:1.75 mixed) to determine number of staff required.
+2. Identify eligible staff per shift (availability, group, hours, rest).
+3. Select staff via heuristic or metaheuristic:
+   - Greedy (least hours first)
+   - Genetic algorithm, local search, or IP for complex cases
+4. Track running totals: hours per week, last shift end.
+5. Apply backtracking or repair to resolve violations.
+6. Mark official holidays or vacation days as "loma" only. Do not use "loma" as a generic fallback. If a shift cannot be filled outside holidays, leave the cell empty or use an approved marker (e.g., "avustaja").
+
+=== Few-Shot Examples ===
+#### 1. Basic Weekly Rotation
 Input:
-<structured_state id="shift-1">
-  <user_summary>Create a weekly schedule for 10 nurses</user_summary>
+<structured_state>
+  <user_summary>Schedule 6 staff to two daily shifts for one week</user_summary>
   <problem_type>Shift scheduling</problem_type>
-  <problem_class>shift_scheduling</problem_class>
-  <optimization_focus>Fair workload and rest compliance</optimization_focus>
-  <goal>Assign each nurse to shifts for 7 days</goal>
-  <data>nurses.csv</data>
-  <resource_requirements>Morning/Evening/Night; max 40h/week; min 11h rest; no >5 consecutive days</resource_requirements>
-  <response_format>Excel file with schedule</response_format>
+  <resource_requirements>Max 38h/week; min 11h rest</resource_requirements>
+  <response_format>Excel with one row</response_format>
+</structured_state>
+Output:
+# Greedy rotation: assign earliest idle staff per shift
+# Save Excel with 1 new week
+
+#### 2. Vacation Handling
+Input:
+<structured_state>
+  <user_summary>Generate a one-week schedule skipping vacations</user_summary>
+  <problem_type>Shift scheduling</problem_type>
+  <resource_requirements>Preserve "loma" cells</resource_requirements>
+  <response_format>Excel with 1 row</response_format>
+</structured_state>
+Output:
+# Retain existing "loma"; assign remaining shifts fairly
+
+#### 3. Multi-Week Extension
+Input:
+<structured_state>
+  <user_summary>Extend schedule by 8 weeks for daycare</user_summary>
+  <problem_type>Shift scheduling</problem_type>
+  <resource_requirements>Group constraints; staffing ratios; 38h15m/week; holidays</resource_requirements>
+  <response_format>Excel with 8 rows</response_format>
+</structured_state>
+Output:
+# Identify last week; append 8 rows
+# Assign per group, hours, rest; save new file
+"""
+  ,
+  "example": """
+### Few-Shot Examples – Shift Scheduling Heuristics
+
+#### Example 1: Basic Weekly Rotation
+Input:
+<structured_state>
+  <user_summary>Schedule 6 staff to two daily shifts for one week</user_summary>
+  <problem_type>Shift scheduling</problem_type>
+  <resource_requirements>Max 38h/week; min 11h rest</resource_requirements>
+  <response_format>Excel with one row</response_format>
 </structured_state>
 
 Output:
-<assistant_response id="shift-1">
-# Heuristic used: Rule-based greedy assignment with rest checks
+# Greedy rotation: assign earliest idle staff per shift
+# Save Excel with 1 new week
 
-import pandas as pd
-
-nurses = pd.read_csv("nurses.csv")
-schedule = []
-
-# For each day and shift, assign first available nurse who:
-# - Has not exceeded 40h
-# - Has min 11h rest since last shift
-# - Has worked ≤ 5 consecutive days
-
-# Store schedule, export to Excel
-</assistant_response>
-
-#### Targeted example: Weekend assignments with availability constraints
+#### Example 2: Vacation Handling
 Input:
-<structured_state id="shift-2">
-  <user_summary>Assign support staff to weekend shifts based on availability</user_summary>
+<structured_state>
+  <user_summary>Generate a one-week schedule skipping vacations</user_summary>
   <problem_type>Shift scheduling</problem_type>
-  <problem_class>shift_scheduling</problem_class>
-  <optimization_focus>Minimize uncovered shifts and balance workload</optimization_focus>
-  <goal>Generate fair weekend assignments</goal>
-  <data>availability.xlsx</data>
-  <resource_requirements>Support staff; 2 per shift; availability constraints</resource_requirements>
-  <response_format>CSV with staff per shift</response_format>
+  <resource_requirements>Preserve "loma" cells</resource_requirements>
+  <response_format>Excel with 1 row</response_format>
 </structured_state>
 
 Output:
-<assistant_response id="shift-2">
-# Heuristic used: Availability-driven greedy selection + rotation fairness
+# Retain existing "loma"; assign remaining shifts fairly
 
-# Read availability matrix
-# For each weekend shift, assign available staff with lowest current load
-# Track assigned hours per person
-# Export CSV with per-shift assignments
-</assistant_response>
-
-#### Complex real-world case: Daycare center scheduling
+#### Example 3: Multi-Week Extension
 Input:
-<structured_state id="shift-3">
-  <user_summary>Continue staff scheduling for a daycare center with 45 children and multiple child/staff ratios</user_summary>
+<structured_state>
+  <user_summary>Extend schedule by 8 weeks for daycare</user_summary>
   <problem_type>Shift scheduling</problem_type>
-  <problem_class>shift_scheduling</problem_class>
-  <optimization_focus>Coverage, group consistency, and workload balance</optimization_focus>
-  <goal>Extend existing Excel-based schedule with valid weekly assignments</goal>
-  <data>schedule_base.xlsx, child_data.xlsx, staff_profiles.xlsx</data>
-  <resource_requirements>
-  - 3 groups: Västäräkki, Peippola, Kiuru
-  - 45 children total (15 under 3, 25 over 3, 5 mixed age)
-  - Staff ratio: 1:4 (under 3), 1:7 (over 3), 1:1.75 (mixed), adjusted for special needs
-  - Each staff has shift availability, group assignment, role, weekly target (38h 15min)
-  - Shifts must respect holidays, avoid overlapping, and stay within hour limits
-  </resource_requirements>
-  <response_format>Excel file in same format as 'tyovuoro_esimerkki.xlsx' with assigned staff names per shift</response_format>
+  <resource_requirements>Group constraints; staffing ratios; 38h15m/week; holidays</resource_requirements>
+  <response_format>Excel with 8 rows</response_format>
 </structured_state>
 
 Output:
-<assistant_response id="shift-3">
-# Heuristic used: Group-based demand estimation + constrained greedy assignment with load balancing
-
-import pandas as pd
-
-# Load data
-schedule_template = pd.read_excel("schedule_base.xlsx")
-child_data = pd.read_excel("child_data.xlsx")
-staff_profiles = pd.read_excel("staff_profiles.xlsx")
-
-# Step 1: Compute required staff per group per time slot based on attendance and adjusted ratios
-# Step 2: For each shift slot:
-#   - Select available staff from the correct group
-#   - Ensure total hours and week limits are not exceeded
-#   - Respect vacations and group assignment
-# Step 3: Prioritize continuity and workload balance
-# Step 4: Assign names to schedule cells, mark "loma" where needed
-
-# Output schedule saved as Excel matching original template format ('tyovuoro_esimerkki.xlsx')
-
-# Example (week 18, simplified preview):
-
-| Week | Mon 6:30–14:30 | Mon 7:00–15:00 | Tue 6:30–14:30 | Tue 7:00–15:00 | ... |
-|------|----------------|----------------|----------------|----------------|-----|
-| 18   | Aalto, Tiina   | Korhonen, Liisa| Aalto          | Virtanen, Mika | ... |
-| 19   | ...            | ...            | ...            | ...            |     |
-
-# Final schedule exported to Excel as instructed.
-</assistant_response>
-""",
+# Identify last week; append 8 rows
+# Assign per group, hours, rest; save new file
+"""
 }
 
+
 WAREHOUSE_OPTIMIZATION = {
-"guidelines": """
+    "guidelines": """
 General Guidelines for Warehouse Optimization Problems:
 
 Warehouse optimization problems typically involve routing mobile agents (e.g., robots, workers) to pick up and deliver items between storage locations and designated areas, while minimizing total movement, time, or energy. Problems may also include optimizing the placement of goods to reduce future travel.
@@ -628,7 +614,7 @@ Recommended libraries:
 - `ortools` for constraint and routing solvers
 - `heapq`, `collections`, `matplotlib` for task queues and visualization
 """,
-"example": """
+    "example": """
 ### Example – Heuristic Code Generation for Warehouse Routing
 
 Input:
@@ -682,7 +668,7 @@ for robot in robots:
 for r in robots:
     print(f"Robot {r['id']}: Path = {r['path']}, Cost = {r['cost']}")
 </assistant_response>
-"""
+""",
 }
 
 OTHER = {
