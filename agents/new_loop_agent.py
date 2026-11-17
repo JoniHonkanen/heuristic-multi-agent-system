@@ -15,6 +15,7 @@ async def new_loop_logic(state: AgentState) -> Code:
     last_output = state["result"]
     # Nollaa korjauslaskuri
     state["fixIterations"] = 0
+    state["fix_history"] = []  # a new program starts a new fix history
     state["optimizedOnce"] = True
 
     problem_type = inputs.problem_class

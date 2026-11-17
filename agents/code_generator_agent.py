@@ -50,6 +50,7 @@ async def code_generator_agent(state: AgentState) -> AgentState:
     # four failed fixes, decide_next_step sends the next run to a node that start_docker's
     # path map does not have (KeyError: 'code_generator').
     state["fixIterations"] = 0
+    state["fix_history"] = []  # a new program starts a new fix history
     current_step = cl.context.current_step
 
     # Prepare display input for Chainlit interface

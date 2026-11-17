@@ -51,6 +51,7 @@ async def heuristic_agent(state: AgentState) -> AgentState:
     # four failed fixes, decide_next_step sends the next run to a node that start_docker's
     # path map does not have (KeyError: 'heuristic').
     state["fixIterations"] = 0
+    state["fix_history"] = []  # a new program starts a new fix history
     current_step = cl.context.current_step
 
     inputs = state["purpose"]

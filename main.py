@@ -48,10 +48,16 @@ def decide_next_step(state: AgentState) -> str:
     return state["proceed"]
 
 def decide_next_step_after_fix(state: AgentState) -> str:
+    # The code fixer gave up on this program: the round ends as a failed round
+    if state.get("gave_up"):
+        return "output_analyzer"
     if state.get("fixIterations", 0) >= 4:
         if not state.get("optimizedOnce", False):
             return decide_problem_analysis(state)
         return "new_loop"
+    # The code fixer found the fault in the Docker files
+    if state.get("docker_fix_note"):
+        return "docker_files"
     return "continue"  
 
 
@@ -112,6 +118,8 @@ workflow.add_conditional_edges(
         "heuristic": "heuristic",
         "new_loop": "new_loop", #if fails many times, start new optimization round
         "continue": "start_docker",  # jatketaan koodin ajoa Dockerissa
+        "docker_files": "docker_files",  # the Docker files need a correction
+        "output_analyzer": "output_analyzer",  # the fixer gave up: the round ends as a failed round
     },
 )
 # workflow.add_edge("start_docker", "output_analyzer")
