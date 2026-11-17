@@ -18,7 +18,7 @@ async def start_docker_container_agent(state: AgentState):
     try:
         # Rakennetaan Docker image
         print("Building Docker image...")
-        build_command = ["docker-compose", "build"]
+        build_command = ["docker", "compose", "build"]
         with subprocess.Popen(
             build_command,
             stdout=subprocess.PIPE,
@@ -35,7 +35,8 @@ async def start_docker_container_agent(state: AgentState):
         # Ajetaan Docker container
         print("Running Docker container...")
         up_command = [
-            "docker-compose",
+            "docker",
+            "compose",
             "up",
             "--abort-on-container-exit",
             "--no-log-prefix",
@@ -107,7 +108,7 @@ async def start_docker_container_agent(state: AgentState):
 
     finally:
         # Siivotaan Docker-resurssit
-        subprocess.run(["docker-compose", "down"])
+        subprocess.run(["docker", "compose", "down"])
         subprocess.run(["docker", "image", "prune", "-f"])
         os.chdir("..")
 
