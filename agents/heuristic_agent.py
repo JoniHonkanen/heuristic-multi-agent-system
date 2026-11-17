@@ -1,4 +1,4 @@
-from prompts.prompts import HEURISTIC_PROMPT
+from prompts.prompts import HEURISTIC_PROMPT, EXECUTION_CONTRACT
 from schemas import AgentState, Code, ProblemClass
 from .common import cl, llm_code, llm_code_claude
 from prompts.instuctions import *
@@ -34,6 +34,8 @@ async def apply_heuristic_logic(state: AgentState) -> Code:
         problem_specific_guidelines=guidance["guidelines"],
         problem_specific_example=guidance["example"],
     )
+
+    prompt += "\n\n" + EXECUTION_CONTRACT  # how the program will be built and run
 
     # Interact with the LLM
     structured_llm = llm_code.with_structured_output(Code)

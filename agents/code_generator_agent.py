@@ -1,4 +1,4 @@
-from prompts.prompts import CODE_PROMPT_NO_DATA, CODE_PROMPT
+from prompts.prompts import CODE_PROMPT_NO_DATA, CODE_PROMPT, EXECUTION_CONTRACT
 from schemas import AgentState, Code
 from .common import cl, llm_code, llm_code_claude
 
@@ -30,6 +30,8 @@ async def generate_code_logic(state: AgentState) -> Code:
             resource_requirements=inputs.resource_requirements,
             response_format=inputs.response_format,
         )
+
+    prompt += "\n\n" + EXECUTION_CONTRACT  # how the program will be built and run
 
     # Interact with the LLM
     structured_llm = llm_code.with_structured_output(Code)

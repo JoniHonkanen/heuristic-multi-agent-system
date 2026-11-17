@@ -4,6 +4,7 @@ from prompts.prompts import (
     NEW_LOOP_CODE_PROMPT,
     NEW_LOOP_CODE_PROMPT_NO_DATA,
     NEW_LOOP_HEURISTIC_PROMPT,
+    EXECUTION_CONTRACT,
 )
 from prompts.instuctions import *
 
@@ -69,6 +70,8 @@ async def new_loop_logic(state: AgentState) -> Code:
                 previous_code=last_code.python_code,
                 resource_requirements=inputs.resource_requirements,
             )
+
+    prompt += "\n\n" + EXECUTION_CONTRACT  # how the program will be built and run
 
     output_parser = PydanticOutputParser(pydantic_object=Code)
     format_instructions = output_parser.get_format_instructions()
