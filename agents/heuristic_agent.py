@@ -45,6 +45,10 @@ async def apply_heuristic_logic(state: AgentState) -> Code:
 @cl.step(name="Heuristic Agent")
 async def heuristic_agent(state: AgentState) -> AgentState:
     print("*** HEURISTIC AGENT ***")
+    # A new program starts with a fresh fix budget, as in new_loop_agent. Otherwise, after
+    # four failed fixes, decide_next_step sends the next run to a node that start_docker's
+    # path map does not have (KeyError: 'heuristic').
+    state["fixIterations"] = 0
     current_step = cl.context.current_step
 
     inputs = state["purpose"]

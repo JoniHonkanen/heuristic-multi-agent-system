@@ -44,6 +44,10 @@ async def generate_code_logic(state: AgentState) -> Code:
 @cl.step(name="Code Generator Agent")
 async def code_generator_agent(state: AgentState) -> AgentState:
     print("*** CODE GENERATOR AGENT ***")
+    # A new program starts with a fresh fix budget, as in new_loop_agent. Otherwise, after
+    # four failed fixes, decide_next_step sends the next run to a node that start_docker's
+    # path map does not have (KeyError: 'code_generator').
+    state["fixIterations"] = 0
     current_step = cl.context.current_step
 
     # Prepare display input for Chainlit interface
