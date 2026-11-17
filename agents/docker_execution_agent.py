@@ -131,6 +131,8 @@ async def start_docker_container_agent(state: AgentState):
         ).send()
 
     finally:
+        # Keep the tail of the unfiltered build + run log; the code fixer can ask for it
+        state["docker_full_log"] = "\n".join(full_output.strip().splitlines()[-150:])[-8000:]
         # Siivotaan Docker-resurssit
         subprocess.run(["docker", "compose", "down"])
         subprocess.run(["docker", "image", "prune", "-f"])

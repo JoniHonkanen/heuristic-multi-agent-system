@@ -92,6 +92,13 @@ class CodeFix(BaseModel):
     original_error: str = Field(
         description="Summary of docker logs (provided error) what needed to be fixed and why."
     )
+    need_full_logs: bool = Field(
+        default=False,
+        description="True if the extracted error is not enough or the Docker setup is suspected; the full log tail and the Docker files are then provided and the fix is asked again.",
+    )
+    full_logs_reason: str = Field(
+        default="", description="Why the full logs are needed (when need_full_logs is true)."
+    )
 
 
 class DockerFiles(BaseModel):
@@ -147,6 +154,7 @@ class AgentState(TypedDict):
     code: Code  # Python code and requirements
     dockerFiles: DockerFiles  # DockerFile and compose.yaml
     docker_output: str  # What running code in docker container outputs
+    docker_full_log: str  # Tail of the unfiltered build + run log, for the code fixer on request
     result: OutputOfCode  # Results of the code execution - answer, explanation, etc.
     results: List[OutputOfCode]
     solution_method: SolutionMethod
