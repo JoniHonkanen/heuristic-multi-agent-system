@@ -438,57 +438,69 @@ SHIFT_SCHEDULING = {
   "guidelines": """
 === General Guidelines for Shift Scheduling Problems ===
 
-You are solving a real-world shift scheduling problem. Your task is to extend an existing schedule by generating valid staff assignments for a specified horizon (e.g., next 8 weeks) without altering any past data. All decisions must respect given inputs and constraints.
+You are solving a real-world shift scheduling problem. Your task is to extend an existing schedule by generating staff assignments for a specified horizon (e.g., next 8 weeks) without altering any past data. Real-world data rarely admits a schedule that satisfies every rule; deliver the best usable schedule and state clearly what it does not satisfy and why.
 
 === Input Specification ===
 Inputs may include:
-- Staff profiles: names, roles, assigned groups/units, weekly hour limits, availability, vacations
+- Staff profiles: names, roles, assigned groups/units, hour limits, availability, absences
 - Shift definitions: labels, time ranges, durations, days of week
-- Demand data: required headcount per shift (static or varying by time)
+- Demand data: required headcount per shift or time slot (static, varying, or derived from other data)
 - Existing schedule/template (e.g., Excel file)
 - Holidays and non-working days
-- Optional dynamic parameters (e.g., attendance, special weighting factors)
+- Optional dynamic parameters (e.g., expected workload, weighting factors)
 
-Always use the provided data exactly as-is. Do not invent, infer, or hardcode placeholder values. Read child attendance and staff profile data directly from the input files; do not use dummy counts or arbitrary defaults.
+Use the provided data as-is; do not invent placeholder values or dummy counts. Where data is messy (name variants, notes in cells) or missing for future dates, make the most plausible interpretation or estimate from history, and list it in your report.
 
-=== Hard Constraints ===
-Your schedule must satisfy every constraint:
-1. **One entry per cell:** Exactly one of: a staff name, "loma", "avustaja", or empty (if allowed). No lists or composites.
+=== Constraints ===
+Separate constraints into two kinds before solving. The input can move a rule between them; follow it. For example, if the input says staff work only in their own unit or group, that rule is hard.
+
+Hard (never violate):
+1. **One entry per cell:** a staff name, an absence/closure marker used in the template, or empty (if allowed). No lists or composites.
 2. **No overlap:** No employee on two overlapping shifts in the same day.
-3. **Minimum rest:** At least 11 hours between shift end and next start.
-4. **Weekly hours:** Do not exceed each employee’s weekly limit (e.g., 38h15m).
-5. **Availability:** Respect vacations, leaves, and other unavailability.
-6. **Grouping:** Assign staff only to their own group/unit.
-7. **Coverage:** Fill all required shifts unless explicitly waived.
-8. **Holidays:** Do not assign on listed holidays unless allowed.
+3. **Availability:** Respect absences and other unavailability.
+4. **Closures:** Do not assign on holidays or non-working days unless allowed.
+5. **Past data:** Do not change existing cells.
+6. **Legal rest and working time:** Minimum rest between shifts and limits set by law.
+
+Soft, in priority order (minimise violations and report them):
+7. **Coverage:** Meet required headcount or ratios per time slot.
+8. **Contracted hours:** Stay within each employee's contracted hours and reach them as closely as possible.
+9. **Grouping and skills:** Assign staff to their own unit/team and to shifts they are qualified for; cross-unit/team cover is allowed when it closes a coverage gap, unless the input makes grouping hard.
+10. **Fairness and continuity:** Spread unpopular shifts evenly; keep the existing rotation where possible.
+
+Never stop, loop, or return nothing because rules conflict: relax soft rules from the lowest priority up.
 
 === Time Parsing Rules ===
-When parsing shift times (e.g., "6.30-14.30", "(7.00) 7.30"), do not cast to float. Clean strings with regex (remove parentheses/whitespace), then parse via `datetime.strptime` supporting ":" or "." separators.
+Do not cast shift times to float (e.g., "6.30-14.30", "(7.00) 7.30"). Clean strings with regex and parse via `datetime.strptime` supporting ":" or "." separators. If parenthesised times carry meaning in the history (e.g., an alternative start), keep that meaning and note it. Durations such as weekly hours ("38:15") are hours and minutes, not clock times.
 
 === Schedule Continuation Rules ===
 - **Never overwrite** existing rows or cells. Save to a new file (e.g., `updated_...xlsx`).
-- **Start at the first empty row** after the highest week number (column A).
-- **Detect the highest week number** and begin new weeks at last + 1, generating exactly the requested number of weeks.
-- **Append** new rows; do not modify historical data.
+- **Find the last scheduled week** by row order or date, not by the maximum week or day number, and start at the first empty row after it.
+- **Generate exactly the requested number of days or weeks**, numbered as ISO weeks: after 52 (or 53) comes 1.
 - **Output file** must contain only newly generated weeks; do not include or reproduce past weeks.
+- **Weekly rotation templates:** if the template is a weekly rotation (one name per shift column per week), that person works that shift on every working day of that week. Keep that form; a daily breakdown may be added as an extra sheet, not instead of it.
 
 === Output Requirements ===
-- Use `openpyxl` for Excel I/O; preserve all formatting, headers, styles, formulas.
-- Write each assignment via `ws.cell(row, col).value = ...`.
-- Follow the template’s row/column structure exactly.
+- Use `openpyxl` for Excel I/O; preserve formatting, headers, styles, formulas. Do not save a workbook loaded with `data_only=True`.
+- Follow the template's row/column structure and markers exactly. Use the template's absence marker only for actual absences or closures, never as a filler for unfilled shifts; leave those empty or use the template's unfilled marker.
+- The program must print a short report (method and why, solver status, assumptions, and every soft-constraint violation: shift/day, size, cause) of at most about 3000 characters; only the end of the printed output is passed on. Put longer details in the output workbook.
 
-=== Recommended Scheduling Logic ===
-Decisions must be data-driven:
-1. **Compute staffing demand per shift dynamically:** for each time slot, sum children present (applying special needs multipliers) by group, then apply group-specific staffing ratios (e.g., 1:4 under‑3, 1:7 over‑3, 1:1.75 mixed) to determine number of staff required.
-2. Identify eligible staff per shift (availability, group, hours, rest).
-3. Select staff via heuristic or metaheuristic:
-   - Greedy (least hours first)
-   - Genetic algorithm, local search, or IP for complex cases
-4. Track running totals: hours per week, last shift end.
-5. Apply backtracking or repair to resolve violations.
-6. Mark official holidays or vacation days as "loma" only. Do not use "loma" as a generic fallback. If a shift cannot be filled outside holidays, leave the cell empty or use an approved marker (e.g., "avustaja").
+=== Optimization Approach ===
+Write and run optimization code; do not assign by intuition. Choose the method from the problem and describe it in 1-3 sentences in the report.
 
-=== Few-Shot Examples ===
+1. **Compute demand per time slot:** if demand is derived (e.g., from workload and staffing ratios), compute it for each time slot. Shifts overlap, so check coverage per slot, not only per shift.
+2. **Build a starting solution:** roll forward the rotation seen in past weeks if there is one; otherwise use a greedy rule (e.g., least hours first among eligible staff).
+3. **Pick the solver by size and difficulty:**
+   - Small or nearly feasible instance -> greedy start plus local repair.
+   - Typical instance (tens of staff, weeks, a few shift types) -> exact model (CP-SAT via OR-Tools, or MILP via PuLP/HiGHS): hard rules as constraints, soft rules as penalised slack with weights an order of magnitude apart by priority (or solved lexicographically). Set a time limit; use the starting solution as a hint.
+   - Large instance, or the exact model misses its time limit -> decompose (e.g., by week or unit, exact solver per subproblem) or use large neighbourhood search / local search seeded with the best known schedule.
+   Prefer the simplest method that reaches a good solution.
+4. **Validate independently:** run a separate checker over the final schedule for every rule; fix hard violations, report soft ones.
+"""
+  ,
+  "example": """
+### Few-Shot Examples - Shift Scheduling
+
 #### 1. Basic Weekly Rotation
 Input:
 <structured_state>
@@ -498,73 +510,45 @@ Input:
   <response_format>Excel with one row</response_format>
 </structured_state>
 Output:
-# Greedy rotation: assign earliest idle staff per shift
-# Save Excel with 1 new week
+# Small instance: greedy rotation plus checker is enough
+# Save Excel with 1 new week; print method and that no rules were violated
 
-#### 2. Vacation Handling
+#### 2. Absence Handling
 Input:
 <structured_state>
-  <user_summary>Generate a one-week schedule skipping vacations</user_summary>
+  <user_summary>Generate a one-week schedule around pre-entered absences</user_summary>
   <problem_type>Shift scheduling</problem_type>
-  <resource_requirements>Preserve "loma" cells</resource_requirements>
+  <resource_requirements>Preserve absence markers</resource_requirements>
   <response_format>Excel with 1 row</response_format>
 </structured_state>
 Output:
-# Retain existing "loma"; assign remaining shifts fairly
+# Treat existing absence markers as fixed inputs; assign remaining shifts fairly
+# Uncovered shift: leave empty (or unfilled marker) and report shift, day, shortfall, cause
 
 #### 3. Multi-Week Extension
 Input:
 <structured_state>
-  <user_summary>Extend schedule by 8 weeks for daycare</user_summary>
+  <user_summary>Extend schedule by 8 weeks</user_summary>
   <problem_type>Shift scheduling</problem_type>
-  <resource_requirements>Group constraints; staffing ratios; 38h15m/week; holidays</resource_requirements>
+  <resource_requirements>Unit constraints; staffing ratios; weekly hours; holidays</resource_requirements>
   <response_format>Excel with 8 rows</response_format>
 </structured_state>
 Output:
-# Identify last week; append 8 rows
-# Assign per group, hours, rest; save new file
-"""
-  ,
-  "example": """
-### Few-Shot Examples – Shift Scheduling Heuristics
+# Find last week by row/date; generate 8 ISO weeks
+# Roll past rotation forward as start; repair with CP-SAT, soft rules as tiered slack, 60 s limit
+# Print method, solver status, violations; save new file
 
-#### Example 1: Basic Weekly Rotation
+#### 4. Conflicting Requirements
 Input:
 <structured_state>
-  <user_summary>Schedule 6 staff to two daily shifts for one week</user_summary>
+  <user_summary>Extend 4 weeks; two staff on sick leave; coverage cannot be met at opening</user_summary>
   <problem_type>Shift scheduling</problem_type>
-  <resource_requirements>Max 38h/week; min 11h rest</resource_requirements>
-  <response_format>Excel with one row</response_format>
+  <resource_requirements>Ratios; unit constraints; weekly hours</resource_requirements>
+  <response_format>Excel with 4 rows</response_format>
 </structured_state>
-
 Output:
-# Greedy rotation: assign earliest idle staff per shift
-# Save Excel with 1 new week
-
-#### Example 2: Vacation Handling
-Input:
-<structured_state>
-  <user_summary>Generate a one-week schedule skipping vacations</user_summary>
-  <problem_type>Shift scheduling</problem_type>
-  <resource_requirements>Preserve "loma" cells</resource_requirements>
-  <response_format>Excel with 1 row</response_format>
-</structured_state>
-
-Output:
-# Retain existing "loma"; assign remaining shifts fairly
-
-#### Example 3: Multi-Week Extension
-Input:
-<structured_state>
-  <user_summary>Extend schedule by 8 weeks for daycare</user_summary>
-  <problem_type>Shift scheduling</problem_type>
-  <resource_requirements>Group constraints; staffing ratios; 38h15m/week; holidays</resource_requirements>
-  <response_format>Excel with 8 rows</response_format>
-</structured_state>
-
-Output:
-# Identify last week; append 8 rows
-# Assign per group, hours, rest; save new file
+# Relax lowest-priority rules first (cross-unit cover if allowed, then hours averaged over the 4 weeks)
+# Remaining shortfall: leave cell empty, report slot and size; deliver schedule plus violations
 """
 }
 
