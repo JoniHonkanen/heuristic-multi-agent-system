@@ -1,4 +1,4 @@
-from prompts.prompts import CODE_PROMPT_NO_DATA, CODE_PROMPT
+from prompts.prompts import CODE_PROMPT_NO_DATA, CODE_PROMPT, EXECUTION_CONTRACT
 from schemas import AgentState, Code
 from .common import cl, llm_code, llm_code_claude
 
@@ -31,6 +31,8 @@ async def generate_code_logic(state: AgentState) -> Code:
             response_format=inputs.response_format,
         )
 
+    prompt += "\n\n" + EXECUTION_CONTRACT  # how the program will be built and run
+
     # Interact with the LLM
     structured_llm = llm_code.with_structured_output(Code)
     response = structured_llm.invoke(prompt)
@@ -44,6 +46,11 @@ async def generate_code_logic(state: AgentState) -> Code:
 @cl.step(name="Code Generator Agent")
 async def code_generator_agent(state: AgentState) -> AgentState:
     print("*** CODE GENERATOR AGENT ***")
+    # A new program starts with a fresh fix budget, as in new_loop_agent. Otherwise, after
+    # four failed fixes, decide_next_step sends the next run to a node that start_docker's
+    # path map does not have (KeyError: 'code_generator').
+    state["fixIterations"] = 0
+    state["fix_history"] = []  # a new program starts a new fix history
     current_step = cl.context.current_step
 
     # Prepare display input for Chainlit interface

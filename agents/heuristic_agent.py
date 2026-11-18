@@ -1,4 +1,4 @@
-from prompts.prompts import HEURISTIC_PROMPT
+from prompts.prompts import HEURISTIC_PROMPT, EXECUTION_CONTRACT
 from schemas import AgentState, Code, ProblemClass
 from .common import cl, llm_code, llm_code_claude
 from prompts.instuctions import *
@@ -35,6 +35,8 @@ async def apply_heuristic_logic(state: AgentState) -> Code:
         problem_specific_example=guidance["example"],
     )
 
+    prompt += "\n\n" + EXECUTION_CONTRACT  # how the program will be built and run
+
     # Interact with the LLM
     structured_llm = llm_code.with_structured_output(Code)
     response = structured_llm.invoke(prompt)
@@ -45,6 +47,11 @@ async def apply_heuristic_logic(state: AgentState) -> Code:
 @cl.step(name="Heuristic Agent")
 async def heuristic_agent(state: AgentState) -> AgentState:
     print("*** HEURISTIC AGENT ***")
+    # A new program starts with a fresh fix budget, as in new_loop_agent. Otherwise, after
+    # four failed fixes, decide_next_step sends the next run to a node that start_docker's
+    # path map does not have (KeyError: 'heuristic').
+    state["fixIterations"] = 0
+    state["fix_history"] = []  # a new program starts a new fix history
     current_step = cl.context.current_step
 
     inputs = state["purpose"]
